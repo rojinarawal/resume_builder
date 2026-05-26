@@ -1,12 +1,40 @@
 from django.db import models
 
+
 class Resume(models.Model):
-    full_name = models.CharField(max_length=100)
-    email = models.EmailField()
-    phone_number = models.CharField(max_length=20)
-    skills = models.TextField()
-    experience = models.TextField()
-    education = models.TextField()
+    """
+    The main resume record.
+    One resume holds all sections as JSON fields.
+    
+    Why JSON fields instead of separate tables for each section?
+    Because for an MVP, storing the whole resume structure as JSON
+    is simpler and fast enough. We can normalize it later.
+    This is a deliberate MVP tradeoff.
+    """
+    # Basic identity fields stored as plain text
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name  = models.CharField(max_length=100, blank=True)
+    job_title  = models.CharField(max_length=200, blank=True)
+    email      = models.EmailField(blank=True)
+    phone      = models.CharField(max_length=30, blank=True)
+    location   = models.CharField(max_length=200, blank=True)
+    linkedin   = models.CharField(max_length=300, blank=True)
+    github     = models.CharField(max_length=300, blank=True)
+
+    # Sections stored as JSON — flexible, no schema changes needed
+    # when you add a new field to the form
+    summary    = models.TextField(blank=True)
+    experience = models.JSONField(default=list)  # list of experience objects
+    education  = models.JSONField(default=list)  # list of education objects
+    skills     = models.JSONField(default=list)  # list of skill category objects
+    projects   = models.JSONField(default=list)  # list of project objects
+
+    # Timestamps — always add these, you'll always want them
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.full_name
+        return f"{self.first_name} {self.last_name} — {self.email}"
+
+    class Meta:
+        ordering = ['-updated_at']  # most recently updated first
