@@ -1,3 +1,47 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --bg: #0a0a0b;
+  --surface: #111113;
+  --surface-2: #18181b;
+  --surface-3: #1e1e22;
+  --border: #27272a;
+  --border-act: #3f3f46;
+  --text: #fafafa;
+  --text-2: #a1a1aa;
+  --text-3: #52525b;
+  --accent: #e4d5b7;
+  --green: #86efac;
+  --red: #f87171;
+}
+
+/* Custom scrollbar — thin dark rail */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar {
+  width: 4px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* Print — hide everything except the resume document */
+@media print {
+  body {
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
+  #resume-doc {
+    box-shadow: none;
+    width: 100%;
+    padding: 28px 36px;
+    transform: none !important;
+  }
+}
