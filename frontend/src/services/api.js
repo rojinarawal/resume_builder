@@ -1,27 +1,80 @@
+// The base URL comes from .env
+// In development: http://localhost:8000/api
+// In production: https://yourapi.com/api  (just change .env)
 const BASE_URL = 'http://localhost:8000/api';
 
-// ── LOCAL STORAGE version (Phase 2) ──────────────────────────────
-export function saveResume(data) {
-  localStorage.setItem('resumeState', JSON.stringify(data));
-  return Promise.resolve({ ok: true });
-}
+/**
+ * Central fetch wrapper
+ * 
+ * Every API call goes through this function.
+ * This means error handling, headers, and base URL
+ * are defined in ONE place — not repeated in every call.
+ * 
+ * Senior engineers never write raw fetch() calls scattered
+ * across components. They centralize them exactly like this.
+ */
 
-export function loadResume() {
-  const raw = localStorage.getItem('resumeState');
-  return Promise.resolve(raw ? JSON.parse(raw) : null);
-}
+async function request(endpoint, options = {}){
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      //Later when we add auth: 'Authorization': `Bearer ${token}`
+    },
+    ...options,
+    // If options has a body, stringify it
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  }
+  
+  try{
+    const response = await fetch(`${BASE_URL}${endpoint}`, config);
 
-// ── DJANGO API version (Phase 3 — uncomment when backend is ready) ──
-// export async function saveResume(data) {
-//   const res = await fetch(`${BASE_URL}/resumes/`, {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify(data)
-//   })
-//   return res.json()
-// }
-//
-// export async function loadResume(id) {
-//   const res = await fetch(`${BASE_URL}/resumes/${id}/`)
-//   return res.json()
-// }
+
+    // If response is not 2xx, throw an error with the server message   
+    if(!response.ok){
+      const error = await response.json().catch(() => ({}))
+      throw new Error(error.detail || `HTTP error: ${response.status}`)
+    }
+
+    // 204 No Content (DELETE) has no body — handle that
+    if (response.status === 204) return null
+
+    return response.json()
+
+    } catch (err) {
+      // Re-throw so the calling component can handle it
+      console.error(`API error [${endpoint}]:`, err.message)
+      throw err
+    }
+  }
+
+// ─── Resume endpoints ────────────────────────────────────────────────────────
+// Each function maps to one Django API endpoint
+// Clean, readable, one job each
+
+export const resumeAPI = {
+
+  // GET /api/resumes/ → fetch all resumes
+  getAll() {
+    return request('/resumes/')
+  },
+
+  // GET /api/resumes/1/ → fetch one resume by id
+  getOne(id) {
+    return request(`/resumes/${id}/`)
+  },
+
+  // POST /api/resumes/ → create a new resume, send full data
+  create(data) {
+    return request('/resumes/',{
+      method: 'POST',
+      body: data,
+    })
+  },
+
+  // DELETE /api/resumes/1/ → delete a resume by id
+  delete(id) {
+    return request(`/resumes/${id}/`, {
+      method: 'DELETE',
+    })
+  },
+}

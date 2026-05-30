@@ -1,12 +1,23 @@
-// Props: saveStatus, onSave, onClear, onPrint
-// "no-print" class hides this from the PDF export
-export default function Header({ saveStatus, onSave, onClear, onPrint }) {
+export default function Header({
+  saveStatus,
+  isSaving,
+  onSave,
+  onClear,
+  onPrint,
+}) {
+  // Status dot color based on state
+  const dotColor =
+    {
+      SAVED: 'var(--green)',
+      UNSAVED: 'var(--text-3)',
+      ERROR: 'var(--red)',
+    }[saveStatus] || 'var(--text-3)';
+
   return (
     <header
       className='no-print flex items-center justify-between px-6 border-b'
       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
-      {/* Logo */}
       <div className='flex items-center gap-3'>
         <div
           style={{
@@ -29,19 +40,17 @@ export default function Header({ saveStatus, onSave, onClear, onPrint }) {
         </span>
       </div>
 
-      {/* Right side actions */}
       <div className='flex items-center gap-3'>
-        {/* Save status indicator */}
         <div className='flex items-center gap-2'>
           <div
             style={{
               width: 6,
               height: 6,
               borderRadius: '50%',
-              background:
-                saveStatus === 'SAVED' ? 'var(--green)' : 'var(--text-3)',
+              background: dotColor,
               boxShadow:
-                saveStatus === 'SAVED' ? '0 0 8px var(--green)' : 'none',
+                saveStatus === 'SAVED' ? `0 0 8px ${dotColor}` : 'none',
+              transition: 'all 0.3s',
             }}
           />
           <span
@@ -52,16 +61,19 @@ export default function Header({ saveStatus, onSave, onClear, onPrint }) {
               letterSpacing: '0.06em',
             }}
           >
-            {saveStatus}
+            {isSaving ? 'SAVING...' : saveStatus}
           </span>
         </div>
 
         <Btn onClick={onClear} variant='ghost'>
           Clear
         </Btn>
-        <Btn onClick={onSave} variant='ghost'>
-          Save
+
+        {/* Disable save button while saving */}
+        <Btn onClick={onSave} variant='ghost' disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save'}
         </Btn>
+
         <Btn onClick={onPrint} variant='primary'>
           Export PDF
         </Btn>
@@ -70,8 +82,7 @@ export default function Header({ saveStatus, onSave, onClear, onPrint }) {
   );
 }
 
-// Small reusable button — notice how we compose styles based on variant prop
-function Btn({ onClick, variant, children }) {
+function Btn({ onClick, variant, disabled, children }) {
   const base = {
     display: 'flex',
     alignItems: 'center',
@@ -83,8 +94,10 @@ function Btn({ onClick, variant, children }) {
     fontSize: 11,
     fontWeight: 500,
     letterSpacing: '0.06em',
-    cursor: 'pointer',
+    cursor: disabled ? 'not-allowed' : 'pointer',
     textTransform: 'uppercase',
+    opacity: disabled ? 0.5 : 1,
+    transition: 'opacity 0.15s',
   };
   const variants = {
     ghost: {
@@ -99,7 +112,11 @@ function Btn({ onClick, variant, children }) {
     },
   };
   return (
-    <button onClick={onClick} style={{ ...base, ...variants[variant] }}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{ ...base, ...variants[variant] }}
+    >
       {children}
     </button>
   );

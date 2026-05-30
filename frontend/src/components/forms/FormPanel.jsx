@@ -4,6 +4,7 @@ import ExperienceForm from './ExperienceForm.jsx';
 import EducationForm from './EducationForm.jsx';
 import SkillsForm from './SkillsForm.jsx';
 import ProjectsForm from './ProjectsForm.jsx';
+import { useState } from 'react';
 
 const SECTIONS = [
   { id: 'basics', label: '01 Basics' },
@@ -24,12 +25,8 @@ const FORM_MAP = {
   projects: ProjectsForm,
 };
 
-export default function FormPanel({
-  data,
-  activeSection,
-  setActiveSection,
-  updateSection,
-}) {
+export default function FormPanel({ data, updateSection }) {
+  const [activeSection, setActiveSection] = useState('basics');
   // Dynamically pick which form component to render
   const ActiveForm = FORM_MAP[activeSection];
 

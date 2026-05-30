@@ -1,47 +1,57 @@
 import Header from '../components/Header.jsx';
 import FormPanel from '../components/forms/FormPanel.jsx';
 import PreviewPanel from '../components/PreviewPanel.jsx';
-import { useState } from 'react';
-
-const defaultData = {
-  basics: {
-    firstName: '',
-    lastName: '',
-    jobTitle: '',
-    email: '',
-    phone: '',
-    location: '',
-    linkedin: '',
-    github: '',
-  },
-  summary: '',
-  experience: [],
-  education: [],
-  skills: [],
-  projects: [],
-};
+import { useResume } from '../hooks/useResume.js';
 
 export default function EditorPage() {
-  const [resumeData, setResumeData] = useState(defaultData);
-  const [activeSection, setActiveSection] = useState('basics');
-  const [scale, setScale] = useState(0.75);
-  const [saveStatus, setSaveStatus] = useState('UNSAVED');
+  const {
+    resumeData,
+    updateSection,
+    saveResume,
+    clearAll,
+    saveStatus,
+    isSaving,
+    isLoading,
+    error,
+  } = useResume();
 
-  function updateSection(section, value) {
-    setResumeData((prev) => ({ ...prev, [section]: value }));
-    setSaveStatus('UNSAVED');
-  }
-
-  function saveResume() {
-    localStorage.setItem('resumeState', JSON.stringify(resumeData));
-    setSaveStatus('SAVED');
-  }
-
-  function clearAll() {
-    if (!window.confirm('Clear everything?')) return;
-    setResumeData(defaultData);
-    localStorage.removeItem('resumeState');
-    setSaveStatus('UNSAVED');
+  // Show loading screen while fetching saved resume
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          height: '100vh',
+          background: 'var(--bg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            border: '2px solid var(--border)',
+            borderTop: '2px solid var(--accent)',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            color: 'var(--text-3)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          LOADING RESUME...
+        </span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    );
   }
 
   return (
@@ -49,8 +59,32 @@ export default function EditorPage() {
       className='grid h-screen'
       style={{ gridTemplateRows: '52px 1fr', background: 'var(--bg)' }}
     >
+      {/* Error banner — shows if API call failed */}
+      {error && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 60,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(248,113,113,0.1)',
+            border: '1px solid var(--red)',
+            borderRadius: 6,
+            padding: '8px 16px',
+            zIndex: 100,
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            color: 'var(--red)',
+            letterSpacing: '0.06em',
+          }}
+        >
+          ⚠ {error}
+        </div>
+      )}
+
       <Header
         saveStatus={saveStatus}
+        isSaving={isSaving}
         onSave={saveResume}
         onClear={clearAll}
         onPrint={() => window.print()}
@@ -59,13 +93,8 @@ export default function EditorPage() {
         className='grid overflow-hidden'
         style={{ gridTemplateColumns: '420px 1fr' }}
       >
-        <FormPanel
-          data={resumeData}
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          updateSection={updateSection}
-        />
-        <PreviewPanel data={resumeData} scale={scale} setScale={setScale} />
+        <FormPanel data={resumeData} updateSection={updateSection} />
+        <PreviewPanel data={resumeData} />
       </div>
     </div>
   );
