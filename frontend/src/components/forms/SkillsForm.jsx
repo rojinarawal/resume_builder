@@ -3,7 +3,7 @@ import Field from '../ui/Field';
 import { inputStyle } from '../ui/styles';
 import AddButton from '../ui/AddButton';
 import EntryCard from '../ui/EntryCard';
-import { useState } from 'react';
+import {useState} from 'react';
 
 function newCategory() {
   return { id: Date.now(), category: '', items: [] };
@@ -12,7 +12,7 @@ function newCategory() {
 export default function SkillsForm({ data, onChange }) {
   const skills = data.skills;
   // Local state just for the current text in each skill input box
-  const [inputs, setInputs] = useState({});
+  const [inputs, setInputs] = useState({})
 
   function addCategory() {
     onChange([...skills, newCategory()]);
