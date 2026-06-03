@@ -1,4 +1,4 @@
-export default function Field({ label, required, children }) {
+export default function Field({ label, required, error, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       <label
@@ -16,6 +16,23 @@ export default function Field({ label, required, children }) {
         )}
       </label>
       {children}
+
+      {/* Error message — only renders if error string is non-empty */}
+      {error && (
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 10,
+            color: 'var(--red)',
+            letterSpacing: '0.04em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          ⚠ {error}
+        </span>
+      )}
     </div>
   );
 }

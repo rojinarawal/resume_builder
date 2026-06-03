@@ -25,7 +25,7 @@ const FORM_MAP = {
   projects: ProjectsForm,
 };
 
-export default function FormPanel({ data, updateSection }) {
+export default function FormPanel({ data, updateSection, getError, touch }) {
   const [activeSection, setActiveSection] = useState('basics');
   // Dynamically pick which form component to render
   const ActiveForm = FORM_MAP[activeSection];
@@ -75,6 +75,8 @@ export default function FormPanel({ data, updateSection }) {
           // Each form gets its own slice of data and an updater function
           // e.g. BasicsForm gets data.basics and calls updateSection('basics', newValue)
           onChange={(value) => updateSection(activeSection, value)}
+          getError={getError}
+          touch={touch}
         />
       </div>
     </div>

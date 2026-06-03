@@ -2,6 +2,7 @@ import Header from '../components/Header.jsx';
 import FormPanel from '../components/forms/FormPanel.jsx';
 import PreviewPanel from '../components/PreviewPanel.jsx';
 import { useResume } from '../hooks/useResume.js';
+import { useValidation } from '../hooks/useValidation.js';
 
 export default function EditorPage() {
   const {
@@ -14,6 +15,8 @@ export default function EditorPage() {
     isLoading,
     error,
   } = useResume();
+
+  const { isValid, touchAll, getError, touch } = useValidation(resumeData);
 
   // Show loading screen while fetching saved resume
   if (isLoading) {
@@ -54,6 +57,14 @@ export default function EditorPage() {
     );
   }
 
+  function handleSave() {
+  if (!isValid) {
+    touchAll()
+    return
+  }
+  saveResume()
+  }
+
   return (
     <div
       className='grid h-screen'
@@ -85,7 +96,8 @@ export default function EditorPage() {
       <Header
         saveStatus={saveStatus}
         isSaving={isSaving}
-        onSave={saveResume}
+        isValid={isValid}
+        onSave={handleSave}
         onClear={clearAll}
         onPrint={() => window.print()}
       />
@@ -93,7 +105,12 @@ export default function EditorPage() {
         className='grid overflow-hidden'
         style={{ gridTemplateColumns: '420px 1fr' }}
       >
-        <FormPanel data={resumeData} updateSection={updateSection} />
+        <FormPanel
+          data={resumeData}
+          updateSection={updateSection}
+          getError={getError}
+          touch={touch}
+        />
         <PreviewPanel data={resumeData} />
       </div>
     </div>
