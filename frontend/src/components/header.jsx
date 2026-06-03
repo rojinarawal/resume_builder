@@ -1,6 +1,7 @@
 export default function Header({
   saveStatus,
   isSaving,
+  isValid,
   onSave,
   onClear,
   onPrint,
@@ -12,6 +13,19 @@ export default function Header({
       UNSAVED: 'var(--text-3)',
       ERROR: 'var(--red)',
     }[saveStatus] || 'var(--text-3)';
+
+  // Save button turns red border when form has errors
+  const saveStyle = !isValid
+    ? {
+        background: 'transparent',
+        color: 'var(--red)',
+        borderColor: 'rgba(248,113,113,0.4)',
+      }
+    : {
+        background: 'transparent',
+        color: 'var(--text-2)',
+        borderColor: 'var(--border)',
+      };
 
   return (
     <header
@@ -69,10 +83,29 @@ export default function Header({
           Clear
         </Btn>
 
-        {/* Disable save button while saving */}
-        <Btn onClick={onSave} variant='ghost' disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save'}
-        </Btn>
+        <button
+          onClick={onSave}
+          disabled={isSaving}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 14px',
+            borderRadius: 6,
+            border: '1px solid',
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: '0.06em',
+            cursor: isSaving ? 'not-allowed' : 'pointer',
+            textTransform: 'uppercase',
+            opacity: isSaving ? 0.5 : 1,
+            transition: 'all 0.2s',
+            ...saveStyle,
+          }}
+        >
+          {isSaving ? 'Saving...' : !isValid ? '⚠ Fix Errors' : 'Save'}
+        </button>
 
         <Btn onClick={onPrint} variant='primary'>
           Export PDF
