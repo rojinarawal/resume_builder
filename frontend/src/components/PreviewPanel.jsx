@@ -1,5 +1,5 @@
 export default function PreviewPanel({ data, scale, setScale }) {
-  const { basics, summary, experience, education, skills, projects } = data;
+  const { basics, experience, education, skills, projects } = data;
 
   const name = [basics.firstName, basics.lastName].filter(Boolean).join(' ');
 
@@ -97,11 +97,6 @@ export default function PreviewPanel({ data, scale, setScale }) {
             >
               {name || <em style={{ color: '#a1a1aa' }}>Your Name</em>}
             </div>
-            {basics.jobTitle && (
-              <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>
-                {basics.jobTitle}
-              </div>
-            )}
             <div
               style={{
                 display: 'flex',
@@ -120,75 +115,6 @@ export default function PreviewPanel({ data, scale, setScale }) {
               {basics.github && <span>⌥ {basics.github}</span>}
             </div>
           </div>
-
-          {/* Summary */}
-          {summary && (
-            <ResumeSection title='Summary'>
-              <p style={{ fontSize: 13, lineHeight: 1.65, color: '#3f3f46' }}>
-                {summary}
-              </p>
-            </ResumeSection>
-          )}
-
-          {/* Experience */}
-          {experience.length > 0 && (
-            <ResumeSection title='Experience'>
-              {experience.map((exp) => (
-                <div key={exp.id} style={{ marginBottom: 14 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: '#0a0a0b',
-                      }}
-                    >
-                      {exp.role || 'Role'}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 10,
-                        color: '#71717a',
-                      }}
-                    >
-                      {[exp.start, exp.end].filter(Boolean).join(' – ')}
-                    </span>
-                  </div>
-                  <div
-                    style={{ fontSize: 12, color: '#52525b', marginBottom: 5 }}
-                  >
-                    {exp.company}
-                  </div>
-                  {exp.bullets && (
-                    <ul style={{ paddingLeft: 14 }}>
-                      {exp.bullets
-                        .split('\n')
-                        .filter(Boolean)
-                        .map((b, i) => (
-                          <li
-                            key={i}
-                            style={{
-                              fontSize: 12,
-                              lineHeight: 1.6,
-                              color: '#3f3f46',
-                            }}
-                          >
-                            {b}
-                          </li>
-                        ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </ResumeSection>
-          )}
 
           {/* Education */}
           {education.length > 0 && (

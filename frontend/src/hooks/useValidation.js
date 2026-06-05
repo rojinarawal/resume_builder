@@ -15,14 +15,6 @@ const rules = {
     value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
       ? 'Enter a valid email address'
       : '',
-
-  minLength: (min) => (value) =>
-    value && value.trim().length < min
-      ? `Must be at least ${min} characters`
-      : '',
-
-  maxLength: (max) => (value) =>
-    value && value.trim().length > max ? `Must be under ${max} characters` : '',
 };
 
 /**
@@ -45,16 +37,6 @@ const schema = {
   'basics.email': {
     label: 'Email',
     validators: [rules.required, rules.email],
-  },
-  'basics.jobTitle': {
-    label: 'Professional Title',
-    validators: [rules.required],
-  },
-
-  // Summary
-  summary: {
-    label: 'Summary',
-    validators: [rules.required, rules.minLength(50)],
   },
 };
 
@@ -131,5 +113,9 @@ export function useValidation(resumeData) {
     return touched[path] ? errors[path] || '' : '';
   }
 
-  return { errors, touched, touch, isValid, touchAll, getError };
+  function resetTouched() {
+    setTouched({});
+  }
+
+  return { errors, touched, touch, isValid, touchAll, getError, resetTouched };
 }

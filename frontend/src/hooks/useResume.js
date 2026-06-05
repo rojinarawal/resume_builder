@@ -19,14 +19,12 @@ const defaultData = {
   basics: {
     firstName: '',
     lastName: '',
-    jobTitle: '',
     email: '',
     phone: '',
     location: '',
     linkedin: '',
     github: '',
   },
-  summary: '',
   experience: [],
   education: [],
   skills: [],
@@ -60,13 +58,11 @@ export function useResume() {
     return {
       first_name: data.basics.firstName,
       last_name: data.basics.lastName,
-      job_title: data.basics.jobTitle,
       email: data.basics.email,
       phone: data.basics.phone,
       location: data.basics.location,
       linkedin: data.basics.linkedin,
       github: data.basics.github,
-      summary: data.summary,
       experience: data.experience,
       education: data.education,
       skills: data.skills,
@@ -83,14 +79,12 @@ export function useResume() {
       basics: {
         firstName: apiData.first_name || '',
         lastName: apiData.last_name || '',
-        jobTitle: apiData.job_title || '',
         email: apiData.email || '',
         phone: apiData.phone || '',
         location: apiData.location || '',
         linkedin: apiData.linkedin || '',
         github: apiData.github || '',
       },
-      summary: apiData.summary || '',
       experience: apiData.experience || [],
       education: apiData.education || [],
       skills: apiData.skills || [],
@@ -158,7 +152,6 @@ export function useResume() {
   }
 
   function clearAll() {
-    if (!window.confirm('Clear everything?')) return;
     setResumeData(defaultData);
     setResumeId(null);
     setSaveStatus('UNSAVED');

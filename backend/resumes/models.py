@@ -14,7 +14,6 @@ class Resume(models.Model):
     # Basic identity fields stored as plain text
     first_name = models.CharField(max_length=100, blank=True)
     last_name  = models.CharField(max_length=100, blank=True)
-    job_title  = models.CharField(max_length=200, blank=True)
     email      = models.EmailField(blank=True)
     phone      = models.CharField(max_length=30, blank=True)
     location   = models.CharField(max_length=200, blank=True)
@@ -23,7 +22,6 @@ class Resume(models.Model):
 
     # Sections stored as JSON — flexible, no schema changes needed
     # when you add a new field to the form
-    summary    = models.TextField(blank=True)
     experience = models.JSONField(default=list)  # list of experience objects
     education  = models.JSONField(default=list)  # list of education objects
     skills     = models.JSONField(default=list)  # list of skill category objects

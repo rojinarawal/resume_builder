@@ -15,17 +15,7 @@ export default function Header({
     }[saveStatus] || 'var(--text-3)';
 
   // Save button turns red border when form has errors
-  const saveStyle = !isValid
-    ? {
-        background: 'transparent',
-        color: 'var(--red)',
-        borderColor: 'rgba(248,113,113,0.4)',
-      }
-    : {
-        background: 'transparent',
-        color: 'var(--text-2)',
-        borderColor: 'var(--border)',
-      };
+  const saveStyle = {};
 
   return (
     <header
@@ -92,19 +82,20 @@ export default function Header({
             gap: 6,
             padding: '6px 14px',
             borderRadius: 6,
-            border: '1px solid',
+            border: '1px solid var(--border)', // ← color inline, no separate borderColor
             fontFamily: 'JetBrains Mono',
             fontSize: 11,
             fontWeight: 500,
             letterSpacing: '0.06em',
+            background: 'transparent',
+            color: 'var(--text-2)',
             cursor: isSaving ? 'not-allowed' : 'pointer',
             textTransform: 'uppercase',
             opacity: isSaving ? 0.5 : 1,
             transition: 'all 0.2s',
-            ...saveStyle,
           }}
         >
-          {isSaving ? 'Saving...' : !isValid ? '⚠ Fix Errors' : 'Save'}
+          {isSaving ? 'Saving...' : 'Save'}
         </button>
 
         <Btn onClick={onPrint} variant='primary'>
