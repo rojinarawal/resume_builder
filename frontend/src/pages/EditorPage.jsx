@@ -3,6 +3,8 @@ import FormPanel from '../components/forms/FormPanel.jsx';
 import PreviewPanel from '../components/PreviewPanel.jsx';
 import { useResume } from '../hooks/useResume.js';
 import { useValidation } from '../hooks/useValidation.js';
+import ConfirmModal from '../components/ui/ConfirmModal.jsx';
+import { useState } from 'react';
 
 export default function EditorPage() {
   const {
@@ -16,7 +18,24 @@ export default function EditorPage() {
     error,
   } = useResume();
 
-  const { isValid, touchAll, getError, touch } = useValidation(resumeData);
+  const { isValid, touchAll, getError, touch, resetTouched } =
+    useValidation(resumeData);
+
+  const [showClearModal, setShowClearModal] = useState(false);
+
+  function handleSave() {
+    if (!isValid) {
+      touchAll();
+      return;
+    }
+    saveResume();
+  }
+
+  function handleClearConfirm() {
+    clearAll();
+    resetTouched();
+    setShowClearModal(false);
+  }
 
   // Show loading screen while fetching saved resume
   if (isLoading) {
@@ -57,14 +76,6 @@ export default function EditorPage() {
     );
   }
 
-  function handleSave() {
-  if (!isValid) {
-    touchAll()
-    return
-  }
-  saveResume()
-  }
-
   return (
     <div
       className='grid h-screen'
@@ -96,9 +107,8 @@ export default function EditorPage() {
       <Header
         saveStatus={saveStatus}
         isSaving={isSaving}
-        isValid={isValid}
         onSave={handleSave}
-        onClear={clearAll}
+        onClear={() => setShowClearModal(true)} // ← open modal, don't clear yet
         onPrint={() => window.print()}
       />
       <div
@@ -113,6 +123,17 @@ export default function EditorPage() {
         />
         <PreviewPanel data={resumeData} />
       </div>
+
+      {/* Clear confirmation modal */}
+      <ConfirmModal
+        isOpen={showClearModal}
+        onCancel={() => setShowClearModal(false)}
+        onConfirm={handleClearConfirm}
+        title='Clear all data?'
+        message="This will permanently erase everything you've entered — your basics, experience, education, skills, and projects. This cannot be undone."
+        confirmLabel='Clear Everything'
+        isDanger={true}
+      />
     </div>
   );
 }

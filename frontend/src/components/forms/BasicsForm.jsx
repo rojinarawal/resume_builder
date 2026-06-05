@@ -56,20 +56,6 @@ export default function BasicsForm({ data, onChange, getError, touch }) {
           </Field>
         </div>
 
-        <Field
-          label='Professional Title'
-          required
-          error={getError('basics.jobTitle')}
-        >
-          <input
-            value={data.basics.jobTitle}
-            onChange={(e) => update('jobTitle', e.target.value)}
-            onBlur={() => touch('basics.jobTitle')}
-            placeholder='Senior Software Engineer'
-            style={inputStyle(!!getError('basics.jobTitle'))}
-          />
-        </Field>
-
         <div
           style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
         >

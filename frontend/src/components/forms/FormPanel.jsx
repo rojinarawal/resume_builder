@@ -1,5 +1,4 @@
 import BasicsForm from './BasicsForm.jsx';
-import SummaryForm from './SummaryForm.jsx';
 import ExperienceForm from './ExperienceForm.jsx';
 import EducationForm from './EducationForm.jsx';
 import SkillsForm from './SkillsForm.jsx';
@@ -8,17 +7,15 @@ import { useState } from 'react';
 
 const SECTIONS = [
   { id: 'basics', label: '01 Basics' },
-  { id: 'summary', label: '02 Summary' },
-  { id: 'experience', label: '03 Experience' },
-  { id: 'education', label: '04 Education' },
-  { id: 'skills', label: '05 Skills' },
-  { id: 'projects', label: '06 Projects' },
+  { id: 'experience', label: '02 Experience' },
+  { id: 'education', label: '03 Education' },
+  { id: 'skills', label: '04 Skills' },
+  { id: 'projects', label: '05 Projects' },
 ];
 
 // Maps each section id to its form component
 const FORM_MAP = {
   basics: BasicsForm,
-  summary: SummaryForm,
   experience: ExperienceForm,
   education: EducationForm,
   skills: SkillsForm,

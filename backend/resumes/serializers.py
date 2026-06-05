@@ -12,8 +12,8 @@ class ResumeSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Resume
-        fields = ['id', 'first_name', 'last_name', 'job_title', 'email', 'phone', 'location', 'linkedin', 'github',
-                'summary', 'experience', 'education', 'skills', 'projects', 'created_at', 'updated_at']
+        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'location', 'linkedin', 'github',
+                'experience', 'education', 'skills', 'projects', 'created_at', 'updated_at']
         
         # These fields come from the DB, frontend never sends them
         read_only_fields = ['id', 'created_at', 'updated_at']
