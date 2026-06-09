@@ -11,11 +11,16 @@ export default function EditorPage() {
     resumeData,
     updateSection,
     saveResume,
+    saveResumeWithPatch,
     clearAll,
     saveStatus,
     isSaving,
     isLoading,
     error,
+    activeSections,
+    addSection,
+    removeSection,
+    reorderSections,
   } = useResume();
 
   const { isValid, touchAll, getError, touch, resetTouched } =
@@ -113,15 +118,20 @@ export default function EditorPage() {
       />
       <div
         className='grid overflow-hidden'
-        style={{ gridTemplateColumns: '420px 1fr' }}
+        style={{ gridTemplateColumns: '2fr 3fr' }}
       >
         <FormPanel
           data={resumeData}
           updateSection={updateSection}
           getError={getError}
           touch={touch}
+          activeSections={activeSections}
+          addSection={addSection}
+          onSectionSave={saveResumeWithPatch} // ← save individual section immediately on edit
+          removeSection={removeSection}
+          reorderSections={reorderSections}
         />
-        <PreviewPanel data={resumeData} />
+        <PreviewPanel data={resumeData} activeSections={activeSections} />
       </div>
 
       {/* Clear confirmation modal */}

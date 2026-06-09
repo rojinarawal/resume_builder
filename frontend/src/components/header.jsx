@@ -40,7 +40,7 @@ export default function Header({
             color: 'var(--text)',
           }}
         >
-          Resumé <span style={{ color: 'var(--text-3)' }}>v0.1</span>
+          Resumé
         </span>
       </div>
 

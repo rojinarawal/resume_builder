@@ -1,80 +1,335 @@
+import { useState } from 'react';
 import BasicsForm from './BasicsForm.jsx';
 import ExperienceForm from './ExperienceForm.jsx';
 import EducationForm from './EducationForm.jsx';
 import SkillsForm from './SkillsForm.jsx';
 import ProjectsForm from './ProjectsForm.jsx';
-import { useState } from 'react';
+import CertificationsForm from './CertificationsForm.jsx';
+import AddSectionModal from '../ui/AddSectionModal.jsx';
+import { SECTION_MAP } from '../../config/section.js';
+import { useDragToReorder } from '../../hooks/useDragToReorder.js';
+import SectionEditModal from '../../components/ui/SectionEditModal.jsx';
+import { Pin, User } from 'lucide-react';
 
-const SECTIONS = [
-  { id: 'basics', label: '01 Basics' },
-  { id: 'experience', label: '02 Experience' },
-  { id: 'education', label: '03 Education' },
-  { id: 'skills', label: '04 Skills' },
-  { id: 'projects', label: '05 Projects' },
-];
-
-// Maps each section id to its form component
-const FORM_MAP = {
-  basics: BasicsForm,
+// Maps section id → its form component
+const FORM_COMPONENTS = {
+  contact: BasicsForm,
   experience: ExperienceForm,
   education: EducationForm,
   skills: SkillsForm,
   projects: ProjectsForm,
+  certifications: CertificationsForm,
 };
 
-export default function FormPanel({ data, updateSection, getError, touch }) {
-  const [activeSection, setActiveSection] = useState('basics');
-  // Dynamically pick which form component to render
-  const ActiveForm = FORM_MAP[activeSection];
+// Maps section id → the key in resumeData it updates
+const SECTION_TO_DATA_KEY = {
+  contact: 'basics',
+  experience: 'experience',
+  education: 'education',
+  skills: 'skills',
+  projects: 'projects',
+  certifications: 'certifications',
+};
+
+export default function FormPanel({
+  data,
+  updateSection,
+  getError,
+  touch,
+  activeSections,
+  onSectionSave,
+  addSection,
+  removeSection,
+  reorderSections,
+}) {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingSection, setEditingSection] = useState(null);
+
+  // Only non-locked sections can be reordered
+  const draggableSections = activeSections.filter(
+    (id) => !SECTION_MAP[id]?.locked,
+  );
+
+  const { getDragProps, dragOverIndex } = useDragToReorder(
+    draggableSections,
+    (reordered) => reorderSections(reordered),
+  );
+
+  // How complete is each section — for the card subtitle
+  function getSectionSummary(id) {
+    switch (id) {
+      case 'experience':
+        return data.experience.length
+          ? `${data.experience.length} position${data.experience.length > 1 ? 's' : ''}`
+          : 'No entries yet';
+      case 'education':
+        return data.education.length
+          ? `${data.education.length} degree${data.education.length > 1 ? 's' : ''}`
+          : 'No entries yet';
+      case 'skills':
+        return data.skills.length
+          ? `${data.skills.reduce((acc, s) => acc + s.items.length, 0)} skills added`
+          : 'No skills yet';
+      case 'projects':
+        return data.projects.length
+          ? `${data.projects.length} project${data.projects.length > 1 ? 's' : ''}`
+          : 'No entries yet';
+      case 'certifications':
+        return data.certifications?.length
+          ? `${data.certifications.length} certification${data.certifications.length > 1 ? 's' : ''}`
+          : 'No entries yet';
+      case 'contact':
+        return data.basics.firstName && data.basics.lastName
+          ? data.basics.firstName + ' ' + data.basics.lastName
+          : 'Fill in your name';
+      default:
+        return '';
+    }
+  }
 
   return (
     <div
-      className='no-print flex flex-col overflow-hidden border-r'
+      className='no-print flex flex-col border-r'
       style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
     >
-      {/* Section pills navigation */}
-      <nav
-        className='flex gap-1 px-4 py-3 border-b overflow-x-auto'
-        style={{ borderColor: 'var(--border)', flexShrink: 0 }}
-      >
-        {SECTIONS.map((s) => (
+      <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        <div
+          style={{
+            background: 'var(--surface-2)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            padding: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {/* LOCKED — Contact always first */}
+          <SectionCard
+            icon={User}
+            label='Personal Info'
+            summary={getSectionSummary('contact')}
+            locked={true}
+            onClick={() => setEditingSection('contact')}
+          />
+
+          {/* DRAGGABLE sections */}
+          {draggableSections.map((id, i) => {
+            const section = SECTION_MAP[id];
+            if (!section) return null;
+            return (
+              <div
+                key={id}
+                {...getDragProps(i)}
+                style={{
+                  opacity: dragOverIndex === i ? 0.4 : 1,
+                  transition: 'opacity 0.15s',
+                }}
+              >
+                <SectionCard
+                  icon={section.icon}
+                  label={section.label}
+                  summary={getSectionSummary(id)}
+                  locked={false}
+                  onClick={() => setEditingSection(id)}
+                  onRemove={() => removeSection(id)}
+                />
+              </div>
+            );
+          })}
+
+          {/* Add Section button */}
           <button
-            key={s.id}
-            onClick={() => setActiveSection(s.id)}
+            onClick={() => setShowAddModal(true)}
             style={{
+              width: '100%',
+              padding: '10px',
+              border: '1px dashed var(--border)',
+              background: 'transparent',
+              borderRadius: 10,
+              color: 'var(--text-3)',
               fontFamily: 'JetBrains Mono',
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: '0.08em',
-              padding: '4px 10px',
-              borderRadius: 20,
-              border: '1px solid',
               textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
               cursor: 'pointer',
-              background:
-                activeSection === s.id
-                  ? 'rgba(228,213,183,0.12)'
-                  : 'transparent',
-              color: activeSection === s.id ? 'var(--accent)' : 'var(--text-3)',
-              borderColor:
-                activeSection === s.id ? 'var(--border-act)' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent)';
+              e.currentTarget.style.color = 'var(--accent)';
+              e.currentTarget.style.background = 'rgba(228,213,183,0.06)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.color = 'var(--text-3)';
+              e.currentTarget.style.background = 'transparent';
             }}
           >
-            {s.label}
+            <span style={{ fontSize: 16 }}>+</span>
+            Add Section
           </button>
-        ))}
-      </nav>
+        </div>
+      </div>
 
-      {/* Render whichever form is active */}
-      <div className='flex-1 overflow-y-auto p-5'>
-        <ActiveForm
-          data={data}
-          // Each form gets its own slice of data and an updater function
-          // e.g. BasicsForm gets data.basics and calls updateSection('basics', newValue)
-          onChange={(value) => updateSection(activeSection, value)}
-          getError={getError}
-          touch={touch}
+      {/* Modals */}
+      <AddSectionModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        activeSections={activeSections}
+        onAdd={(id) => {
+          addSection(id);
+          setTimeout(() => setEditingSection(id), 100);
+        }}
+      />
+
+      <SectionEditModal
+        isOpen={!!editingSection}
+        sectionId={editingSection}
+        data={data}
+        onSave={onSectionSave}
+        onClose={() => setEditingSection(null)}
+        getError={getError}
+        touch={touch}
+      />
+    </div>
+  );
+}
+
+function SectionCard({
+  icon: Icon,
+  label,
+  summary,
+  locked,
+  onClick,
+  onRemove,
+}) {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 14px',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border-act)';
+        e.currentTarget.style.background = 'var(--surface-3)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border)';
+        e.currentTarget.style.background = 'var(--surface)';
+      }}
+    >
+      {/* Icon box */}
+      <div
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 8,
+          background: 'var(--surface-2)',
+          border: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {Icon && <Icon size={15} color='var(--text-2)' />}
+      </div>
+
+      {/* Drag handle or lock */}
+      {locked ? (
+        <Pin
+          size={14}
+          style={{
+            flexShrink: 0,
+            color: 'var(--text-3)',
+          }}
         />
+      ) : (
+        <span
+          style={{
+            color: 'var(--text-3)',
+            fontSize: 14,
+            cursor: 'grab',
+            flexShrink: 0,
+          }}
+        >
+          ⠿
+        </span>
+      )}
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: 'Geist, sans-serif',
+            fontSize: 13,
+            color: 'var(--text)',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 10,
+            color: 'var(--text-3)',
+            marginTop: 2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {summary}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div
+        style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+      >
+        {!locked && onRemove && (
+          <span
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-3)',
+              fontSize: 15,
+              transition: 'color 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red)')}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = 'var(--text-3)')
+            }
+          >
+            ×
+          </span>
+        )}
+        <span style={{ color: 'var(--text-3)', fontSize: 13 }}>→</span>
       </div>
     </div>
   );
