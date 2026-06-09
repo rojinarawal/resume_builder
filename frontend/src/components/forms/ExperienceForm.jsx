@@ -1,11 +1,10 @@
-import SectionHeader from '../ui/SectionHeader';
-import Field from '../ui/Field';
-import EntryCard from '../ui/EntryCard';
-import AddButton from '../ui/AddButton';
 import { inputStyle, textareaStyle } from '../ui/styles';
+import Field from '../ui/Field.jsx';
+import EntryCard from '../ui/EntryCard.jsx';
+import AddButton from '../ui/AddButton.jsx';
+import { useDragToReorder } from '../../hooks/useDragToReorder.js';
+import MonthPicker from '../../components/MonthPicker.jsx';
 
-// Creates a blank experience object with a unique id
-// Date.now() gives a unique number — good enough for a local id
 function newExperience() {
   return {
     id: Date.now(),
@@ -17,37 +16,28 @@ function newExperience() {
   };
 }
 
-export default function ExperienceForm({ data, onChange }) {
+export default function ExperienceForm({ data, onChange, getError, touch }) {
   const experiences = data.experience;
 
-  // ADD — append a new blank entry to the array
+  const { getDragProps, dragOverIndex } = useDragToReorder(
+    experiences,
+    (reordered) => onChange(reordered),
+  );
+
   function add() {
     onChange([...experiences, newExperience()]);
   }
-
-  // REMOVE — keep every entry except the one with this id
   function remove(id) {
-    onChange(experiences.filter((exp) => exp.id !== id));
+    onChange(experiences.filter((e) => e.id !== id));
   }
-
-  // UPDATE — map over the array, find the matching id, spread and override one field
-  // This is the most important pattern — learn it deeply
   function update(id, field, value) {
     onChange(
-      experiences.map((exp) =>
-        exp.id === id ? { ...exp, [field]: value } : exp,
-      ),
+      experiences.map((e) => (e.id === id ? { ...e, [field]: value } : e)),
     );
   }
 
   return (
     <div>
-      <SectionHeader
-        number='03'
-        title='Work Experience'
-        sub='Most recent first. Use bullet points with impact metrics.'
-      />
-
       {experiences.length === 0 && (
         <p
           style={{
@@ -57,73 +47,120 @@ export default function ExperienceForm({ data, onChange }) {
             fontStyle: 'italic',
           }}
         >
-          No experience added yet. Click below to add your first role.
+          No experience added yet.
         </p>
       )}
 
       {experiences.map((exp, i) => (
-        <EntryCard
+        <div
           key={exp.id}
-          index={i}
-          label='Position'
-          onRemove={() => remove(exp.id)}
+          {...getDragProps(i)}
+          style={{
+            opacity: dragOverIndex === i ? 0.5 : 1,
+            transition: 'opacity 0.15s',
+          }}
         >
-          <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
-          >
-            <Field label='Role'>
-              <input
-                value={exp.role}
-                onChange={(e) => update(exp.id, 'role', e.target.value)}
-                placeholder='Software Engineer'
-                style={inputStyle}
-              />
-            </Field>
-            <Field label='Company'>
-              <input
-                value={exp.company}
-                onChange={(e) => update(exp.id, 'company', e.target.value)}
-                placeholder='Google'
-                style={inputStyle}
-              />
-            </Field>
-          </div>
+          <EntryCard index={i} label='Position' onRemove={() => remove(exp.id)}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                padding: '4px 0 10px',
+                cursor: 'grab',
+                userSelect: 'none',
+                color: 'var(--text-3)',
+              }}
+            >
+              <svg
+                width='16'
+                height='16'
+                viewBox='0 0 16 16'
+                fill='currentColor'
+              >
+                <circle cx='5' cy='4' r='1.2' />
+                <circle cx='5' cy='8' r='1.2' />
+                <circle cx='5' cy='12' r='1.2' />
+                <circle cx='11' cy='4' r='1.2' />
+                <circle cx='11' cy='8' r='1.2' />
+                <circle cx='11' cy='12' r='1.2' />
+              </svg>
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 9,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                drag to reorder
+              </span>
+            </div>
 
-          <div
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
-          >
-            <Field label='Start Date'>
-              <input
-                value={exp.start}
-                onChange={(e) => update(exp.id, 'start', e.target.value)}
-                placeholder='Jan 2022'
-                style={inputStyle}
-              />
-            </Field>
-            <Field label='End Date'>
-              <input
-                value={exp.end}
-                onChange={(e) => update(exp.id, 'end', e.target.value)}
-                placeholder='Present'
-                style={inputStyle}
-              />
-            </Field>
-          </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 10,
+              }}
+            >
+              <Field label='Role'>
+                <input
+                  value={exp.role}
+                  onChange={(e) => update(exp.id, 'role', e.target.value)}
+                  placeholder='Software Engineer'
+                  style={inputStyle}
+                />
+              </Field>
+              <Field label='Company'>
+                <input
+                  value={exp.company}
+                  onChange={(e) => update(exp.id, 'company', e.target.value)}
+                  placeholder='Google'
+                  style={inputStyle}
+                />
+              </Field>
+            </div>
 
-          <Field label='Bullet Points (one per line)'>
-            <textarea
-              value={exp.bullets}
-              onChange={(e) => update(exp.id, 'bullets', e.target.value)}
-              placeholder={`Led migration to microservices, reducing latency by 40%\nMentored 3 junior engineers\nShipped payment system handling $2M/day`}
-              style={textareaStyle}
-              rows={4}
-            />
-          </Field>
-        </EntryCard>
+            {/* ↓ Swapped from <input type="month"> to MonthPicker */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 10,
+              }}
+            >
+              <Field label='Start Date'>
+                <MonthPicker
+                  value={exp.start}
+                  onChange={(v) => update(exp.id, 'start', v)}
+                  placeholder='Start date'
+                />
+              </Field>
+              <Field label='End Date'>
+                <MonthPicker
+                  value={exp.end}
+                  onChange={(v) => update(exp.id, 'end', v)}
+                  placeholder='Present'
+                />
+              </Field>
+            </div>
+
+            <Field label='Bullet Points (one per line)'>
+              <textarea
+                value={exp.bullets}
+                onChange={(e) => update(exp.id, 'bullets', e.target.value)}
+                placeholder={`Led migration to microservices, reducing latency by 40%\nMentored 3 junior engineers`}
+                style={textareaStyle}
+                rows={4}
+              />
+            </Field>
+          </EntryCard>
+        </div>
       ))}
 
       <AddButton onClick={add} label='Add Position' />
     </div>
   );
 }
-

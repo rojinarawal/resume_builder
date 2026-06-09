@@ -1,7 +1,5 @@
-export default function PreviewPanel({ data, scale, setScale }) {
-  const { basics, experience, education, skills, projects } = data;
-
-  const name = [basics.firstName, basics.lastName].filter(Boolean).join(' ');
+export default function PreviewPanel({ data, activeSections }) {
+  const { basics } = data;
 
   return (
     <div
@@ -32,25 +30,6 @@ export default function PreviewPanel({ data, scale, setScale }) {
         >
           Live Preview
         </span>
-        <div className='flex items-center gap-2'>
-          <ScaleBtn onClick={() => setScale((s) => Math.max(0.4, s - 0.05))}>
-            −
-          </ScaleBtn>
-          <span
-            style={{
-              fontFamily: 'JetBrains Mono',
-              fontSize: 11,
-              color: 'var(--text-3)',
-              minWidth: 36,
-              textAlign: 'center',
-            }}
-          >
-            {Math.round(scale * 100)}%
-          </span>
-          <ScaleBtn onClick={() => setScale((s) => Math.min(1.1, s + 0.05))}>
-            +
-          </ScaleBtn>
-        </div>
       </div>
 
       {/* Scrollable area */}
@@ -63,23 +42,23 @@ export default function PreviewPanel({ data, scale, setScale }) {
           padding: '32px 20px',
         }}
       >
-        {/* The actual white resume document */}
+        {/* Resume document */}
         <div
           id='resume-doc'
           style={{
-            width: 680,
+            width: 850,
             minHeight: 880,
             background: '#fff',
             color: '#111',
+            borderRadius: 10,
             padding: '52px 56px',
             fontFamily: 'Geist, sans-serif',
             boxShadow: '0 4px 60px rgba(0,0,0,0.6)',
             transformOrigin: 'top center',
-            transform: `scale(${scale})`,
             flexShrink: 0,
           }}
         >
-          {/* Header */}
+          {/* Personal info header — always first, always shown */}
           <div
             style={{
               marginBottom: 28,
@@ -91,11 +70,12 @@ export default function PreviewPanel({ data, scale, setScale }) {
               style={{
                 fontFamily: 'DM Serif Display',
                 fontSize: 32,
+                fontWeight: 600,
                 color: '#0a0a0b',
                 lineHeight: 1.1,
               }}
             >
-              {name || <em style={{ color: '#a1a1aa' }}>Your Name</em>}
+              {basics.firstName} {basics.lastName}
             </div>
             <div
               style={{
@@ -116,123 +96,24 @@ export default function PreviewPanel({ data, scale, setScale }) {
             </div>
           </div>
 
-          {/* Education */}
-          {education.length > 0 && (
-            <ResumeSection title='Education'>
-              {education.map((edu) => (
-                <div
-                  key={edu.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: 8,
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>
-                      {edu.degree || 'Degree'}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#52525b' }}>
-                      {edu.school}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 10,
-                      color: '#71717a',
-                      textAlign: 'right',
-                    }}
-                  >
-                    {edu.year}
-                    {edu.gpa && (
-                      <>
-                        <br />
-                        GPA: {edu.gpa}
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </ResumeSection>
-          )}
-
-          {/* Skills */}
-          {skills.length > 0 && (
-            <ResumeSection title='Skills'>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '6px 24px',
-                }}
-              >
-                {skills
-                  .filter((s) => s.items.length)
-                  .map((cat) => (
-                    <div key={cat.id} style={{ fontSize: 12 }}>
-                      <span style={{ fontWeight: 600, color: '#0a0a0b' }}>
-                        {cat.category}:{' '}
-                      </span>
-                      <span style={{ color: '#3f3f46' }}>
-                        {cat.items.join(', ')}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </ResumeSection>
-          )}
-
-          {/* Projects */}
-          {projects.length > 0 && (
-            <ResumeSection title='Projects'>
-              {projects.map((proj) => (
-                <div key={proj.id} style={{ marginBottom: 12 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'baseline',
-                    }}
-                  >
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>
-                      {proj.name || 'Project'}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 10,
-                        color: '#71717a',
-                      }}
-                    >
-                      {proj.tech}
-                    </span>
-                  </div>
-                  {proj.url && (
-                    <div style={{ fontSize: 12, color: '#52525b' }}>
-                      {proj.url}
-                    </div>
-                  )}
-                  {proj.desc && (
-                    <p
-                      style={{
-                        fontSize: 12,
-                        color: '#3f3f46',
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {proj.desc}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </ResumeSection>
-          )}
+          {/*
+            Sections rendered in EXACT order user arranged them.
+            activeSections = ['contact', 'experience', 'education', ...]
+            We skip 'contact' because it's the header above.
+            renderSection() returns null if section has no data yet.
+          */}
+          {(activeSections || [])
+            .filter((id) => id !== 'contact')
+            .map((id) => (
+              <div key={id}>{renderSection(id, data)}</div>
+            ))}
         </div>
       </div>
     </div>
   );
 }
+
+// ── Helper components ─────────────────────────────────────────────────────────
 
 function ResumeSection({ title, children }) {
   return (
@@ -257,25 +138,187 @@ function ResumeSection({ title, children }) {
   );
 }
 
-function ScaleBtn({ onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        width: 24,
-        height: 24,
-        borderRadius: 4,
-        border: '1px solid var(--border)',
-        background: 'transparent',
-        color: 'var(--text-2)',
-        cursor: 'pointer',
-        fontSize: 14,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {children}
-    </button>
-  );
+// Map section id → its render function
+function renderSection(id, data) {
+  const sectionRenderers = {
+    experience: () =>
+      data.experience?.length > 0 && (
+        <ResumeSection title='Experience'>
+          {data.experience.map((exp) => (
+            <div key={exp.id} style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>
+                  {exp.role}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 10,
+                    color: '#71717a',
+                  }}
+                >
+                  {[exp.start, exp.end].filter(Boolean).join(' – ')}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: '#52525b', marginBottom: 5 }}>
+                {exp.company}
+              </div>
+              {exp.bullets && (
+                <ul style={{ paddingLeft: 14 }}>
+                  {exp.bullets
+                    .split('\n')
+                    .filter(Boolean)
+                    .map((b, i) => (
+                      <li
+                        key={i}
+                        style={{
+                          fontSize: 12,
+                          lineHeight: 1.6,
+                          color: '#3f3f46',
+                        }}
+                      >
+                        {b}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </ResumeSection>
+      ),
+
+    education: () =>
+      data.education?.length > 0 && (
+        <ResumeSection title='Education'>
+          {data.education.map((edu) => (
+            <div
+              key={edu.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>
+                  {edu.degree}
+                </div>
+                <div style={{ fontSize: 12, color: '#52525b' }}>
+                  {edu.school}
+                </div>
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 10,
+                  color: '#71717a',
+                  textAlign: 'right',
+                }}
+              >
+                {edu.year}
+                {edu.gpa && (
+                  <>
+                    <br />
+                    GPA: {edu.gpa}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </ResumeSection>
+      ),
+
+    skills: () =>
+      data.skills?.length > 0 && (
+        <ResumeSection title='Skills'>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '6px 24px',
+            }}
+          >
+            {data.skills
+              .filter((s) => s.items?.length)
+              .map((cat) => (
+                <div key={cat.id} style={{ fontSize: 12 }}>
+                  <span style={{ fontWeight: 600, color: '#0a0a0b' }}>
+                    {cat.category}:{' '}
+                  </span>
+                  <span style={{ color: '#3f3f46' }}>
+                    {cat.items.join(', ')}
+                  </span>
+                </div>
+              ))}
+          </div>
+        </ResumeSection>
+      ),
+
+    projects: () =>
+      data.projects?.length > 0 && (
+        <ResumeSection title='Projects'>
+          {data.projects.map((proj) => (
+            <div key={proj.id} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>
+                  {proj.name}
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 10,
+                    color: '#71717a',
+                  }}
+                >
+                  {proj.tech}
+                </span>
+              </div>
+              {proj.url && (
+                <div style={{ fontSize: 12, color: '#52525b' }}>{proj.url}</div>
+              )}
+              {proj.desc && (
+                <p style={{ fontSize: 12, color: '#3f3f46', lineHeight: 1.6 }}>
+                  {proj.desc}
+                </p>
+              )}
+            </div>
+          ))}
+        </ResumeSection>
+      ),
+
+    certifications: () =>
+      data.certifications?.length > 0 && (
+        <ResumeSection title='Certifications'>
+          {data.certifications.map((cert) => (
+            <div
+              key={cert.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{cert.name}</div>
+                <div style={{ fontSize: 12, color: '#52525b' }}>
+                  {cert.issuer}
+                </div>
+              </div>
+              <div
+                style={{
+                  fontFamily: 'JetBrains Mono',
+                  fontSize: 10,
+                  color: '#71717a',
+                }}
+              >
+                {cert.date}
+              </div>
+            </div>
+          ))}
+        </ResumeSection>
+      ),
+  };
+
+  const renderer = sectionRenderers[id];
+  return renderer ? renderer() : null;
 }

@@ -31,6 +31,8 @@ const defaultData = {
   projects: [],
 };
 
+const defaultSections = ['contact']; // only contact section is active by default'
+
 export function useResume() {
   const [resumeData, setResumeData] = useState(defaultData);
   const [resumeId, setResumeId] = useState(null); // null means not saved to DB yet
@@ -38,6 +40,31 @@ export function useResume() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeSections, setActiveSections] = useState(defaultSections);
+
+  // Add this function — called when user picks a section from modal
+  function addSection(sectionId) {
+    setActiveSections((prev) => [...prev, sectionId]);
+  }
+
+  // Add this function — called when user removes a section
+  function removeSection(sectionId) {
+    setActiveSections((prev) => prev.filter((id) => id !== sectionId));
+    // Also clear the data for that section
+    setResumeData((prev) => ({
+      ...prev,
+      [sectionId]: [],
+    }));
+  }
+
+  // Add this function — called when user drags to reorder
+  function reorderSections(newOrder) {
+    // Never let contact move from index 0
+    setActiveSections([
+      'contact',
+      ...newOrder.filter((id) => id !== 'contact'),
+    ]);
+  }
 
   // Update one section without wiping the rest
   function updateSection(section, value) {
@@ -92,30 +119,21 @@ export function useResume() {
     };
   }
 
-  /**
-   * Save resume — smart save
-   * If resumeId exists → PUT (update)
-   * If no resumeId    → POST (create)
-   *
-   * This pattern is called "upsert" — update or insert
-   */
-  async function saveResume() {
+  // ─── Core save logic — reused by both saveResume and saveResumeWithPatch ──
+
+  async function _save(dataToSave) {
     setIsSaving(true);
     setError(null);
 
     try {
-      const payload = toApiShape(resumeData);
+      const payload = toApiShape(dataToSave);
       let saved;
 
       if (resumeId) {
-        // Already exists in DB — update it
         saved = await resumeAPI.update(resumeId, payload);
       } else {
-        // First time saving — create it
         saved = await resumeAPI.create(payload);
-        // Store the id so next save is a PUT not a POST
         setResumeId(saved.id);
-        // Also persist id in localStorage so it survives page refresh
         localStorage.setItem('resumeId', saved.id);
       }
 
@@ -124,9 +142,36 @@ export function useResume() {
       setError(err.message);
       setSaveStatus('ERROR');
     } finally {
-      // Always runs — whether success or error
       setIsSaving(false);
     }
+  }
+
+  // ─── Save entire resume (header Save button) ───
+  async function saveResume() {
+    await _save(resumeData);
+  }
+
+  /**
+   * saveResumeWithPatch — called when user saves a section in the modal
+   *
+   * Merges the changed section into current resumeData inline,
+   * then immediately saves to Django without waiting for setState.
+   *
+   * Why not just call updateSection + saveResume?
+   * Because setState is async — by the time saveResume runs,
+   * resumeData still has the old value. We avoid that by building
+   * updatedData ourselves and passing it directly to _save.
+   */
+  async function saveResumeWithPatch(dataKey, value) {
+    // Build updated data inline — don't rely on setState timing
+    const updatedData = { ...resumeData, [dataKey]: value };
+
+    // Update UI state immediately so preview refreshes
+    setResumeData(updatedData);
+    setSaveStatus('UNSAVED');
+
+    // Save the patched data directly to Django
+    await _save(updatedData);
   }
 
   /**
@@ -142,6 +187,16 @@ export function useResume() {
       setResumeData(fromApiShape(data));
       setResumeId(data.id);
       setSaveStatus('SAVED');
+
+      // Restore active sections from saved data
+      // Any section that has data → add it to activeSections
+      const restored = ['contact'];
+      if (data.experience?.length) restored.push('experience');
+      if (data.education?.length) restored.push('education');
+      if (data.skills?.length) restored.push('skills');
+      if (data.projects?.length) restored.push('projects');
+      if (data.certifications?.length) restored.push('certifications');
+      setActiveSections(restored);
     } catch (err) {
       setError(err.message);
       // If load fails, clear the bad id
@@ -156,6 +211,7 @@ export function useResume() {
     setResumeId(null);
     setSaveStatus('UNSAVED');
     setError(null);
+    setActiveSections(defaultSections);
     localStorage.removeItem('resumeId');
   }
 
@@ -170,8 +226,13 @@ export function useResume() {
 
   return {
     resumeData,
+    activeSections,
+    addSection,
+    removeSection,
+    reorderSections,
     updateSection,
     saveResume,
+    saveResumeWithPatch,
     loadResume,
     clearAll,
     resumeId,
