@@ -7,6 +7,7 @@ import ProjectsForm from '../forms/ProjectsForm.jsx';
 import CertificationsForm from '../forms/CertificationsForm.jsx';
 import { SECTION_MAP } from '../../config/section.js';
 import { useValidation } from '../../hooks/useValidation.js';
+import { sanitizeSection } from '../../utils/sanitize.js';
 
 // Maps section id → its form component
 const FORM_COMPONENTS = {
@@ -66,7 +67,7 @@ export default function SectionEditModal({
   // JSON parse/stringify is the simplest way to deep clone
   useEffect(() => {
     if (isOpen && data && dataKey) {
-      setLocalData(JSON.parse(JSON.stringify(data[dataKey])));
+      setLocalData(sanitizeSection(sectionId, data[dataKey]));
       setHasChanges(false);
     }
   }, [isOpen, sectionId]);

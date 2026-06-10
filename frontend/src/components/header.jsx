@@ -3,7 +3,6 @@ export default function Header({
   isSaving,
   isValid,
   onSave,
-  onClear,
   onPrint,
 }) {
   // Status dot color based on state
@@ -68,10 +67,6 @@ export default function Header({
             {isSaving ? 'SAVING...' : saveStatus}
           </span>
         </div>
-
-        <Btn onClick={onClear} variant='ghost'>
-          Clear
-        </Btn>
 
         <button
           onClick={onSave}

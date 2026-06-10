@@ -16,8 +16,23 @@ function newExperience() {
   };
 }
 
+// Sanitize a single experience entry coming from API
+// Any field might be missing or null, so we provide defaults to ensure the form works smoothly
+function sanitizeExperience(exp) {
+  return {
+    id: exp.id ?? Date.now(),
+    role: exp.role ?? '',
+    company: exp.company ?? '',
+    start: exp.start ?? '',
+    end: exp.end ?? '',
+    bullets: exp.bullets ?? '',
+  };
+}
+
 export default function ExperienceForm({ data, onChange, getError, touch }) {
-  const experiences = data.experience;
+  const experiences = Array.isArray(data.experience)
+    ? data.experience.map(sanitizeExperience)
+    : [];
 
   const { getDragProps, dragOverIndex } = useDragToReorder(
     experiences,

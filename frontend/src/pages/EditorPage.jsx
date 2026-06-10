@@ -3,7 +3,6 @@ import FormPanel from '../components/forms/FormPanel.jsx';
 import PreviewPanel from '../components/PreviewPanel.jsx';
 import { useResume } from '../hooks/useResume.js';
 import { useValidation } from '../hooks/useValidation.js';
-import ConfirmModal from '../components/ui/ConfirmModal.jsx';
 import { useState } from 'react';
 
 export default function EditorPage() {
@@ -12,7 +11,6 @@ export default function EditorPage() {
     updateSection,
     saveResume,
     saveResumeWithPatch,
-    clearAll,
     saveStatus,
     isSaving,
     isLoading,
@@ -26,20 +24,12 @@ export default function EditorPage() {
   const { isValid, touchAll, getError, touch, resetTouched } =
     useValidation(resumeData);
 
-  const [showClearModal, setShowClearModal] = useState(false);
-
   function handleSave() {
     if (!isValid) {
       touchAll();
       return;
     }
     saveResume();
-  }
-
-  function handleClearConfirm() {
-    clearAll();
-    resetTouched();
-    setShowClearModal(false);
   }
 
   // Show loading screen while fetching saved resume
@@ -113,7 +103,6 @@ export default function EditorPage() {
         saveStatus={saveStatus}
         isSaving={isSaving}
         onSave={handleSave}
-        onClear={() => setShowClearModal(true)} // ← open modal, don't clear yet
         onPrint={() => window.print()}
       />
       <div
@@ -133,17 +122,6 @@ export default function EditorPage() {
         />
         <PreviewPanel data={resumeData} activeSections={activeSections} />
       </div>
-
-      {/* Clear confirmation modal */}
-      <ConfirmModal
-        isOpen={showClearModal}
-        onCancel={() => setShowClearModal(false)}
-        onConfirm={handleClearConfirm}
-        title='Clear all data?'
-        message="This will permanently erase everything you've entered — your basics, experience, education, skills, and projects. This cannot be undone."
-        confirmLabel='Clear Everything'
-        isDanger={true}
-      />
     </div>
   );
 }

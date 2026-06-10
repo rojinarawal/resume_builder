@@ -12,7 +12,6 @@ export default function ResumePage({
       <Header
         saveStatus={saveStatus}
         onSave={onSave}
-        onClear={onClear}
         onPrint={onPrint}
       />
 
