@@ -8,8 +8,20 @@ function newProject() {
   return { id: Date.now(), name: '', tech: '', url: '', desc: '' };
 }
 
+function sanitizeProject(proj) {
+  return {
+    id: proj.id ?? Date.now(),
+    name: proj.name ?? '',
+    tech: proj.tech ?? '',
+    url: proj.url ?? '',
+    desc: proj.desc ?? '',
+  };
+}
+
 export default function ProjectsForm({ data, onChange }) {
-  const projects = data.projects;
+  const projects = Array.isArray(data.projects)
+    ? data.projects.map(sanitizeProject)
+    : [];
 
   function add() {
     onChange([...projects, newProject()]);

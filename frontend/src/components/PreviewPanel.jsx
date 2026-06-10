@@ -1,5 +1,5 @@
 export default function PreviewPanel({ data, activeSections }) {
-  const { basics } = data;
+  const basics = data?.basics || {};
 
   return (
     <div
@@ -75,7 +75,11 @@ export default function PreviewPanel({ data, activeSections }) {
                 lineHeight: 1.1,
               }}
             >
-              {basics.firstName} {basics.lastName}
+              {basics.fullName || (
+                <em style={{ color: '#a1a1aa', fontStyle: 'normal' }}>
+                  Your Name
+                </em>
+              )}
             </div>
             <div
               style={{

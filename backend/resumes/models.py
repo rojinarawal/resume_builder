@@ -12,8 +12,7 @@ class Resume(models.Model):
     This is a deliberate MVP tradeoff.
     """
     # Basic identity fields stored as plain text
-    first_name = models.CharField(max_length=100, blank=True)
-    last_name  = models.CharField(max_length=100, blank=True)
+    full_name = models.CharField(max_length=200, blank=True)
     email      = models.EmailField(blank=True)
     phone      = models.CharField(max_length=30, blank=True)
     location   = models.CharField(max_length=200, blank=True)
@@ -26,13 +25,14 @@ class Resume(models.Model):
     education  = models.JSONField(default=list)  # list of education objects
     skills     = models.JSONField(default=list)  # list of skill category objects
     projects   = models.JSONField(default=list)  # list of project objects
-
+    certifications = models.JSONField(default=list)  # list of certification objects
+    active_sections = models.JSONField(default=list, blank=True, help_text='Ordered list of active section ids')  # e.g. ["experience", "education"] to control which sections are shown in preview
     # Timestamps — always add these, you'll always want them
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} — {self.email}"
+        return f"{self.full_name} — {self.email}"
 
     class Meta:
         ordering = ['-updated_at']  # most recently updated first

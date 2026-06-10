@@ -8,8 +8,20 @@ function newEducation() {
   return { id: Date.now(), degree: '', school: '', year: '', gpa: '' };
 }
 
+function sanitizeEducation(edu) {
+  return {
+    id: edu.id ?? Date.now(),
+    degree: edu.degree ?? '',
+    school: edu.school ?? '',
+    year: edu.year ?? '',
+    gpa: edu.gpa ?? '',
+  };
+}
+
 export default function EducationForm({ data, onChange }) {
-  const educations = data.education;
+  const educations = Array.isArray(data.education)
+    ? data.education.map(sanitizeEducation)
+    : [];
 
   function add() {
     onChange([...educations, newEducation()]);

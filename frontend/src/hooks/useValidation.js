@@ -26,12 +26,8 @@ const rules = {
  */
 const schema = {
   // Basics
-  'basics.firstName': {
-    label: 'First Name',
-    validators: [rules.required],
-  },
-  'basics.lastName': {
-    label: 'Last Name',
+  'basics.fullName': {
+    label: 'Full Name',
     validators: [rules.required],
   },
   'basics.email': {
@@ -42,7 +38,7 @@ const schema = {
 
 /**
  * Gets a nested value from an object using a dot-path string
- * e.g. getValue({ basics: { firstName: 'Jane' } }, 'basics.firstName') → 'Jane'
+ * e.g. getValue({ basics: { fullName: 'Jane Smith' } }, 'basics.fullName') → 'Jane Smith'
  */
 function getValue(data, path) {
   return path.split('.').reduce((obj, key) => obj?.[key], data);
@@ -77,8 +73,8 @@ function validateAll(data) {
  * useValidation hook
  *
  * Returns:
- * - errors        → { 'basics.firstName': 'This field is required' }
- * - touched       → { 'basics.firstName': true } — tracks which fields user visited
+ * - errors        → { 'basics.fullName': 'This field is required' }
+ * - touched       → { 'basics.fullName': true } — tracks which fields user visited
  * - touch(path)   → mark a field as touched (call onBlur)
  * - isValid       → true if zero errors
  * - touchAll()    → mark everything touched (call on Save attempt)

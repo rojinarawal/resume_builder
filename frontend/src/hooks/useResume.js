@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { resumeAPI } from '../services/api.js';
+import { sanitizeResume } from '../utils/sanitize.js';
 
 /**
  * useResume — custom hook that manages all resume state and API calls
@@ -17,8 +18,7 @@ import { resumeAPI } from '../services/api.js';
 
 const defaultData = {
   basics: {
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     phone: '',
     location: '',
@@ -29,6 +29,7 @@ const defaultData = {
   education: [],
   skills: [],
   projects: [],
+  certifications: [],
 };
 
 const defaultSections = ['contact']; // only contact section is active by default'
@@ -75,16 +76,15 @@ export function useResume() {
   /**
    * Transforms our frontend data shape → Django API shape
    *
-   * Frontend uses camelCase: firstName, jobTitle
-   * Django uses snake_case: first_name, job_title
+   * Frontend uses camelCase: fullName, jobTitle
+   * Django uses snake_case: full_name, job_title
    *
    * This function is the bridge between the two worlds.
    * We never let this leak into components.
    */
   function toApiShape(data) {
     return {
-      first_name: data.basics.firstName,
-      last_name: data.basics.lastName,
+      full_name: data.basics.fullName,
       email: data.basics.email,
       phone: data.basics.phone,
       location: data.basics.location,
@@ -94,6 +94,8 @@ export function useResume() {
       education: data.education,
       skills: data.skills,
       projects: data.projects,
+      certifications: data.certifications,
+      active_sections: activeSections,
     };
   }
 
@@ -103,19 +105,24 @@ export function useResume() {
    */
   function fromApiShape(apiData) {
     return {
-      basics: {
-        firstName: apiData.first_name || '',
-        lastName: apiData.last_name || '',
-        email: apiData.email || '',
-        phone: apiData.phone || '',
-        location: apiData.location || '',
-        linkedin: apiData.linkedin || '',
-        github: apiData.github || '',
-      },
-      experience: apiData.experience || [],
-      education: apiData.education || [],
-      skills: apiData.skills || [],
-      projects: apiData.projects || [],
+      data: sanitizeResume({
+        basics: {
+          fullName: apiData.full_name,
+          email: apiData.email,
+          phone: apiData.phone,
+          location: apiData.location,
+          linkedin: apiData.linkedin,
+          github: apiData.github,
+        },
+        experience: apiData.experience,
+        education: apiData.education,
+        skills: apiData.skills,
+        projects: apiData.projects,
+        certifications: apiData.certifications,
+      }),
+      activeSections: apiData.active_sections?.length
+        ? apiData.active_sections
+        : ['contact'],
     };
   }
 
@@ -183,20 +190,25 @@ export function useResume() {
     setError(null);
 
     try {
-      const data = await resumeAPI.getOne(id);
-      setResumeData(fromApiShape(data));
-      setResumeId(data.id);
+      const apiData = await resumeAPI.getOne(id);
+      const { data: shaped, activeSections: savedSections } =
+        fromApiShape(apiData);
+      setResumeData(shaped);
+      setResumeId(apiData.id);
       setSaveStatus('SAVED');
 
-      // Restore active sections from saved data
-      // Any section that has data → add it to activeSections
-      const restored = ['contact'];
-      if (data.experience?.length) restored.push('experience');
-      if (data.education?.length) restored.push('education');
-      if (data.skills?.length) restored.push('skills');
-      if (data.projects?.length) restored.push('projects');
-      if (data.certifications?.length) restored.push('certifications');
-      setActiveSections(restored);
+      // Restore active sections from saved_sections or rebuild from data
+      if (savedSections?.length > 1) {
+        setActiveSections(savedSections);
+      } else {
+        const restored = ['contact'];
+        if (shaped.experience?.length) restored.push('experience');
+        if (shaped.education?.length) restored.push('education');
+        if (shaped.skills?.length) restored.push('skills');
+        if (shaped.projects?.length) restored.push('projects');
+        if (shaped.certifications?.length) restored.push('certifications');
+        setActiveSections(restored);
+      }
     } catch (err) {
       setError(err.message);
       // If load fails, clear the bad id
@@ -204,15 +216,6 @@ export function useResume() {
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function clearAll() {
-    setResumeData(defaultData);
-    setResumeId(null);
-    setSaveStatus('UNSAVED');
-    setError(null);
-    setActiveSections(defaultSections);
-    localStorage.removeItem('resumeId');
   }
 
   // On first mount — check if user has a saved resume id
@@ -234,7 +237,6 @@ export function useResume() {
     saveResume,
     saveResumeWithPatch,
     loadResume,
-    clearAll,
     resumeId,
     saveStatus,
     isSaving,

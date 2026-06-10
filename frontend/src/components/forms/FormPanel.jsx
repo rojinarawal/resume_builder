@@ -78,10 +78,6 @@ export default function FormPanel({
         return data.certifications?.length
           ? `${data.certifications.length} certification${data.certifications.length > 1 ? 's' : ''}`
           : 'No entries yet';
-      case 'contact':
-        return data.basics.firstName && data.basics.lastName
-          ? data.basics.firstName + ' ' + data.basics.lastName
-          : 'Fill in your name';
       default:
         return '';
     }

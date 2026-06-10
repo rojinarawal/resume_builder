@@ -32,26 +32,16 @@ export default function BasicsForm({ data, onChange, getError, touch }) {
           style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}
         >
           <Field
-            label='First Name'
+            label='Full Name'
             required
-            error={getError('basics.firstName')}
+            error={getError('basics.fullName')}
           >
             <input
-              value={data.basics.firstName}
-              onChange={(e) => update('firstName', e.target.value)}
-              onBlur={() => touch('basics.firstName')}
-              placeholder='Jane'
-              style={inputStyle(!!getError('basics.firstName'))}
-            />
-          </Field>
-
-          <Field label='Last Name' required error={getError('basics.lastName')}>
-            <input
-              value={data.basics.lastName}
-              onChange={(e) => update('lastName', e.target.value)}
-              onBlur={() => touch('basics.lastName')}
-              placeholder='Smith'
-              style={inputStyle(!!getError('basics.lastName'))}
+              value={data.basics.fullName}
+              onChange={(e) => update('fullName', e.target.value)}
+              onBlur={() => touch('basics.fullName')}
+              placeholder='Jane Smith'
+              style={inputStyle(!!getError('basics.fullName'))}
             />
           </Field>
         </div>
