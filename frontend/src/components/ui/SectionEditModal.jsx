@@ -41,27 +41,26 @@ const SECTION_TO_DATA_KEY = {
  * - getError     → validation helper
  * - touch        → validation helper
  */
+
 export default function SectionEditModal({
   isOpen,
   sectionId,
   data,
   onSave,
   onClose,
-  getError,
-  touch,
 }) {
   const section = SECTION_MAP[sectionId];
   const Form = FORM_COMPONENTS[sectionId];
   const dataKey = SECTION_TO_DATA_KEY[sectionId];
+  const [localData, setLocalData] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
+  const SectionIcon = section?.icon;
 
   /**
    * localData — a copy of this section's data
    * User edits this freely without touching the real resumeData.
    * Only on Save do we commit to the real state.
    */
-  const [localData, setLocalData] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
-  const SectionIcon = section?.icon;
 
   // When modal opens — take a deep copy of the current section data
   // JSON parse/stringify is the simplest way to deep clone
@@ -89,6 +88,13 @@ export default function SectionEditModal({
     };
   }, [isOpen]);
 
+  // Build localDataObj BEFORE calling useValidation
+  // localData might be null before modal opens — use data as fallback
+  const localDataObj =
+    localData !== null ? { ...data, [dataKey]: localData } : data;
+
+  const { getError, touch, getWarning, isValid, touchAll } =
+    useValidation(localDataObj, sectionId);
   if (!isOpen || !section || !Form || localData === null) return null;
 
   // When form fields change — update localData only
@@ -99,16 +105,13 @@ export default function SectionEditModal({
 
   // Save — commit localData to real resumeData
   function handleSave() {
+    if (!isValid) {
+      touchAll(); //show all errors immediately if user tries to save with invalid data
+      return; //block save if data is invalid
+    }
     onSave(dataKey, localData);
     onClose();
   }
-
-  // Build a fake data object so forms can read from localData
-  // Forms expect the full data object, so we merge localData into data
-  const localDataObj = {
-    ...data,
-    [dataKey]: localData,
-  };
 
   return (
     <>
@@ -245,6 +248,7 @@ export default function SectionEditModal({
             data={localDataObj}
             onChange={handleChange}
             getError={getError}
+            getWarning={getWarning}
             touch={touch}
           />
         </div>
@@ -296,9 +300,17 @@ export default function SectionEditModal({
             style={{
               padding: '8px 20px',
               borderRadius: 6,
-              border: '1px solid var(--accent)',
-              background: hasChanges ? 'var(--accent)' : 'var(--surface-3)',
-              color: hasChanges ? '#0a0a0b' : 'var(--text-3)',
+              border: `1px solid ${!isValid ? 'rgba(248,113,113,0.4)' : 'var(--accent)'}`,
+              background: !isValid
+                ? 'rgba(248,113,113,0.08)'
+                : hasChanges
+                  ? 'var(--accent)'
+                  : 'var(--surface-3)',
+              color: !isValid
+                ? 'var(--red)'
+                : hasChanges
+                  ? '#0a0a0b'
+                  : 'var(--text-3)',
               fontFamily: 'JetBrains Mono',
               fontSize: 11,
               letterSpacing: '0.06em',
@@ -308,7 +320,11 @@ export default function SectionEditModal({
               fontWeight: 500,
             }}
           >
-            {hasChanges ? 'Save Changes' : 'No Changes'}
+            {!isValid
+              ? '⚠ Fix Errors'
+              : hasChanges
+                ? 'Save Changes'
+                : 'No Changes'}
           </button>
         </div>
       </div>

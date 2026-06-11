@@ -45,8 +45,33 @@ export default function FormPanel({
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
 
+  // Filter sections to only show those that have data
+  const sectionsWithData = activeSections.filter((id) => {
+    const dataKey = SECTION_TO_DATA_KEY[id];
+    if (!dataKey) return false;
+
+    const sectionData = data[dataKey];
+
+    // Contact section always shows (personal info)
+    if (id === 'contact') return true;
+
+    // For array-based sections, check if they have entries
+    if (Array.isArray(sectionData)) {
+      return sectionData.length > 0;
+    }
+
+    // For object-based sections (like basics), check if it's not empty
+    if (typeof sectionData === 'object' && sectionData !== null) {
+      return Object.keys(sectionData).some(
+        (key) => sectionData[key] && String(sectionData[key]).trim() !== '',
+      );
+    }
+
+    return false;
+  });
+
   // Only non-locked sections can be reordered
-  const draggableSections = activeSections.filter(
+  const draggableSections = sectionsWithData.filter(
     (id) => !SECTION_MAP[id]?.locked,
   );
 
@@ -61,25 +86,29 @@ export default function FormPanel({
       case 'experience':
         return data.experience.length
           ? `${data.experience.length} position${data.experience.length > 1 ? 's' : ''}`
-          : 'No entries yet';
+          : null;
       case 'education':
         return data.education.length
           ? `${data.education.length} degree${data.education.length > 1 ? 's' : ''}`
-          : 'No entries yet';
+          : null;
       case 'skills':
-        return data.skills.length
-          ? `${data.skills.reduce((acc, s) => acc + s.items.length, 0)} skills added`
-          : 'No skills yet';
+        const totalSkills = data.skills.reduce(
+          (acc, s) => acc + s.items.length,
+          0,
+        );
+        return totalSkills > 0
+          ? `${totalSkills} skill${totalSkills > 1 ? 's' : ''} added`
+          : null;
       case 'projects':
         return data.projects.length
           ? `${data.projects.length} project${data.projects.length > 1 ? 's' : ''}`
-          : 'No entries yet';
+          : null;
       case 'certifications':
         return data.certifications?.length
           ? `${data.certifications.length} certification${data.certifications.length > 1 ? 's' : ''}`
-          : 'No entries yet';
+          : null;
       default:
-        return '';
+        return null;
     }
   }
 
@@ -100,7 +129,7 @@ export default function FormPanel({
             gap: 8,
           }}
         >
-          {/* LOCKED — Contact always first */}
+          {/* LOCKED — Contact always shows (even if empty) */}
           <SectionCard
             icon={User}
             label='Personal Info'
@@ -109,7 +138,7 @@ export default function FormPanel({
             onClick={() => setEditingSection('contact')}
           />
 
-          {/* DRAGGABLE sections */}
+          {/* DRAGGABLE sections - only show those with data */}
           {draggableSections.map((id, i) => {
             const section = SECTION_MAP[id];
             if (!section) return null;
@@ -189,8 +218,6 @@ export default function FormPanel({
         data={data}
         onSave={onSectionSave}
         onClose={() => setEditingSection(null)}
-        getError={getError}
-        touch={touch}
       />
     </div>
   );
@@ -281,19 +308,21 @@ function SectionCard({
         >
           {label}
         </div>
-        <div
-          style={{
-            fontFamily: 'JetBrains Mono',
-            fontSize: 10,
-            color: 'var(--text-3)',
-            marginTop: 2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {summary}
-        </div>
+        {summary && (
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono',
+              fontSize: 10,
+              color: 'var(--text-3)',
+              marginTop: 2,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {summary}
+          </div>
+        )}
       </div>
 
       {/* Actions */}
@@ -316,6 +345,7 @@ function SectionCard({
               color: 'var(--text-3)',
               fontSize: 15,
               transition: 'color 0.15s',
+              cursor: 'pointer',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red)')}
             onMouseLeave={(e) =>

@@ -1,4 +1,4 @@
-export default function Field({ label, required, error, children }) {
+export default function Field({ label, required, error, warning, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       <label
@@ -31,6 +31,23 @@ export default function Field({ label, required, error, children }) {
           }}
         >
           ⚠ {error}
+        </span>
+      )}
+
+      {/* Warning — amber, doesn't block save */}
+      {!error && warning && (
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 10,
+            color: '#f59e0b',
+            letterSpacing: '0.04em',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          ◆ {warning}
         </span>
       )}
     </div>

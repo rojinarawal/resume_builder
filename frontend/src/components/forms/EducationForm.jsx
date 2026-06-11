@@ -1,8 +1,7 @@
-import SectionHeader from '../ui/SectionHeader';
 import Field from '../ui/Field';
 import EntryCard from '../ui/EntryCard';
 import AddButton from '../ui/AddButton';
-import { inputStyle } from '../ui/styles';
+import { inputStyle, fieldInputStyle } from '../ui/styles';
 
 function newEducation() {
   return { id: Date.now(), degree: '', school: '', year: '', gpa: '' };
@@ -18,7 +17,13 @@ function sanitizeEducation(edu) {
   };
 }
 
-export default function EducationForm({ data, onChange }) {
+export default function EducationForm({
+  data,
+  onChange,
+  getError,
+  getWarning,
+  touch,
+}) {
   const educations = Array.isArray(data.education)
     ? data.education.map(sanitizeEducation)
     : [];
@@ -39,14 +44,21 @@ export default function EducationForm({ data, onChange }) {
     );
   }
 
+  // Helper to get error/warning for a specific education field
+  function getFieldError(index, field) {
+    return getError?.(`education.${index}.${field}`);
+  }
+
+  function getFieldWarning(index, field) {
+    return getWarning?.(`education.${index}.${field}`);
+  }
+
+  function touchField(index, field) {
+    touch?.(`education.${index}.${field}`);
+  }
+
   return (
     <div>
-      <SectionHeader
-        number='04'
-        title='Education'
-        sub='Degrees and relevant certifications. Most recent first.'
-      />
-
       {educations.length === 0 && (
         <p
           style={{
@@ -67,41 +79,55 @@ export default function EducationForm({ data, onChange }) {
           label='Degree'
           onRemove={() => remove(edu.id)}
         >
-          <Field label='Degree & Major'>
+          <Field
+            label='Degree & Major'
+            required
+            error={getFieldError(i, 'degree')}
+          >
             <input
               value={edu.degree}
               onChange={(e) => update(edu.id, 'degree', e.target.value)}
+              onBlur={() => touchField(i, 'degree')}
               placeholder='B.S. Computer Science'
-              style={inputStyle}
+              style={fieldInputStyle(!!getFieldError(i, 'degree'))}
             />
           </Field>
 
-          <Field label='School'>
+          <Field label='School' required error={getFieldError(i, 'school')}>
             <input
               value={edu.school}
               onChange={(e) => update(edu.id, 'school', e.target.value)}
+              onBlur={() => touchField(i, 'school')}
               placeholder='MIT'
-              style={inputStyle}
+              style={fieldInputStyle(!!getFieldError(i, 'school'))}
             />
           </Field>
 
           <div
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
           >
-            <Field label='Graduation Year'>
+            <Field
+              label='Graduation Year'
+              required
+              error={getFieldError(i, 'year')}
+              warning={getFieldWarning(i, 'year')}
+            >
               <input
                 value={edu.year}
                 onChange={(e) => update(edu.id, 'year', e.target.value)}
+                onBlur={() => touchField(i, 'year')}
                 placeholder='2022'
-                style={inputStyle}
+                style={fieldInputStyle(!!getFieldError(i, 'year'))}
               />
             </Field>
-            <Field label='GPA (optional)'>
+
+            <Field label='GPA (optional)' warning={getFieldWarning(i, 'gpa')}>
               <input
                 value={edu.gpa}
                 onChange={(e) => update(edu.id, 'gpa', e.target.value)}
+                onBlur={() => touchField(i, 'gpa')}
                 placeholder='3.9 / 4.0'
-                style={inputStyle}
+                style={fieldInputStyle(false)}
               />
             </Field>
           </div>

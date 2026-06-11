@@ -1,6 +1,5 @@
-import SectionHeader from '../ui/SectionHeader';
 import Field from '../ui/Field';
-import { inputStyle } from '../ui/styles';
+import { fieldInputStyle } from '../ui/styles';
 import AddButton from '../ui/AddButton';
 import EntryCard from '../ui/EntryCard';
 import { useState } from 'react';
@@ -20,7 +19,13 @@ function sanitizeCategory(cat) {
   };
 }
 
-export default function SkillsForm({ data, onChange }) {
+export default function SkillsForm({
+  data,
+  onChange,
+  getError,
+  getWarning,
+  touch,
+}) {
   const skills = Array.isArray(data.skills)
     ? data.skills.map(sanitizeCategory)
     : [];
@@ -69,12 +74,6 @@ export default function SkillsForm({ data, onChange }) {
 
   return (
     <div>
-      <SectionHeader
-        number='05'
-        title='Skills'
-        sub='Group by category. Press Enter or + to add each skill.'
-      />
-
       {skills.length === 0 && (
         <p
           style={{
@@ -102,12 +101,17 @@ export default function SkillsForm({ data, onChange }) {
             label='Category'
             onRemove={() => removeCategory(cat.id)}
           >
-            <Field label='Category Name'>
+            <Field
+              label='Category Name'
+              error={getError?.(`skills.${i}.category`)}
+              warning={getWarning?.(`skills.${i}.category`)}
+            >
               <input
                 value={cat.category}
                 onChange={(e) => updateCategory(cat.id, e.target.value)}
+                onBlur={() => touch?.(`skills.${i}.category`)}
                 placeholder='Languages / Frameworks / Tools'
-                style={inputStyle}
+                style={fieldInputStyle(!!getError?.(`skills.${i}.category`))}
               />
             </Field>
 
@@ -159,7 +163,7 @@ export default function SkillsForm({ data, onChange }) {
                 }
                 onKeyDown={(e) => e.key === 'Enter' && addItem(cat.id)}
                 placeholder='Type a skill and press Enter'
-                style={{ ...inputStyle, flex: 1 }}
+                style={{ ...fieldInputStyle(false), flex: 1 }}
               />
               <button
                 onClick={() => addItem(cat.id)}

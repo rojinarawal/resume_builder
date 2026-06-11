@@ -1,16 +1,37 @@
 import Field from '../ui/Field.jsx';
 import EntryCard from '../ui/EntryCard.jsx';
 import AddButton from '../ui/AddButton.jsx';
-import { inputStyle } from '../ui/styles.js';
+import { fieldInputStyle } from '../ui/styles.js';
 import { useDragToReorder } from '../../hooks/useDragToReorder.js';
 
 function newCertification() {
   return { id: Date.now(), name: '', issuer: '', date: '', url: '' };
 }
 
-export default function CertificationsForm({ data, onChange }) {
-  const certs = data.certifications || [];
-  const { getDragProps, dragOverIndex } = useDragToReorder(certs, onChange);
+function sanitizeCertification(cert) {
+  return {
+    id: cert.id ?? Date.now(),
+    name: cert.name ?? '',
+    issuer: cert.issuer ?? '',
+    date: cert.date ?? '',
+    url: cert.url ?? '',
+  };
+}
+
+export default function CertificationsForm({
+  data,
+  onChange,
+  getError,
+  getWarning,
+  touch,
+}) {
+  const certs = Array.isArray(data.certifications)
+    ? data.certifications.map(sanitizeCertification)
+    : [];
+
+  const { getDragProps, dragOverIndex } = useDragToReorder(certs, (reordered) =>
+    onChange(reordered),
+  );
 
   function add() {
     onChange([...certs, newCertification()]);
@@ -67,14 +88,22 @@ export default function CertificationsForm({ data, onChange }) {
               ⠿ drag to reorder
             </div>
 
-            <Field label='Certification Name'>
+            <Field
+              label='Certification Name'
+              error={getError?.(`certifications.${i}.name`)}
+              warning={getWarning?.(`certifications.${i}.name`)}
+            >
               <input
                 value={cert.name}
                 onChange={(e) => update(cert.id, 'name', e.target.value)}
+                onBlur={() => touch?.(`certifications.${i}.name`)}
                 placeholder='AWS Solutions Architect'
-                style={inputStyle}
+                style={fieldInputStyle(
+                  !!getError?.(`certifications.${i}.name`),
+                )}
               />
             </Field>
+
             <div
               style={{
                 display: 'grid',
@@ -82,29 +111,50 @@ export default function CertificationsForm({ data, onChange }) {
                 gap: 10,
               }}
             >
-              <Field label='Issuer'>
+              <Field
+                label='Issuer'
+                error={getError?.(`certifications.${i}.issuer`)}
+                warning={getWarning?.(`certifications.${i}.issuer`)}
+              >
                 <input
                   value={cert.issuer}
                   onChange={(e) => update(cert.id, 'issuer', e.target.value)}
+                  onBlur={() => touch?.(`certifications.${i}.issuer`)}
                   placeholder='Amazon'
-                  style={inputStyle}
+                  style={fieldInputStyle(
+                    !!getError?.(`certifications.${i}.issuer`),
+                  )}
                 />
               </Field>
-              <Field label='Date'>
+
+              <Field
+                label='Date'
+                error={getError?.(`certifications.${i}.date`)}
+                warning={getWarning?.(`certifications.${i}.date`)}
+              >
                 <input
                   value={cert.date}
                   onChange={(e) => update(cert.id, 'date', e.target.value)}
+                  onBlur={() => touch?.(`certifications.${i}.date`)}
                   placeholder='Jun 2024'
-                  style={inputStyle}
+                  style={fieldInputStyle(
+                    !!getError?.(`certifications.${i}.date`),
+                  )}
                 />
               </Field>
             </div>
-            <Field label='URL (optional)'>
+
+            <Field
+              label='URL (optional)'
+              error={getError?.(`certifications.${i}.url`)}
+              warning={getWarning?.(`certifications.${i}.url`)}
+            >
               <input
                 value={cert.url}
                 onChange={(e) => update(cert.id, 'url', e.target.value)}
+                onBlur={() => touch?.(`certifications.${i}.url`)}
                 placeholder='credential url'
-                style={inputStyle}
+                style={fieldInputStyle(!!getError?.(`certifications.${i}.url`))}
               />
             </Field>
           </EntryCard>

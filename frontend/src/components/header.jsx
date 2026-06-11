@@ -2,6 +2,7 @@ export default function Header({
   saveStatus,
   isSaving,
   isValid,
+  showErrors,
   onSave,
   onPrint,
 }) {
@@ -90,7 +91,7 @@ export default function Header({
             transition: 'all 0.2s',
           }}
         >
-          {isSaving ? 'Saving...' : 'Save'}
+          {isSaving ? 'Saving...' : showErrors ? '⚠ Fix Errors' : 'Save'}
         </button>
 
         <Btn onClick={onPrint} variant='primary'>
