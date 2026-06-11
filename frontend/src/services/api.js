@@ -82,4 +82,10 @@ export const resumeAPI = {
       method: 'DELETE',
     });
   },
+
+  exportPdf(id) {
+    // Direct browser download — no fetch needed
+    // Browser handles the file download automatically
+    window.open(`${BASE_URL}/resumes/${id}/export`, '_blank');
+  },
 };

@@ -3,6 +3,44 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Resume
 from .serializers import ResumeSerializer
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+import pdfkit
+import os
+
+@api_view(['GET'])
+def export_pdf(request, pk):
+    try:
+        resume = Resume.objects.get(pk=pk)
+    except Resume.DoesNotExist:
+        return Response({'error': 'Resume not found'}, status=404)
+
+    html_string = render_to_string('resumes/resume_pdf.html', {
+        'resume': resume,
+        'active_sections': resume.active_sections or [],
+    })
+
+    options = {
+        'page-size': 'A4',
+        'margin-top': '18mm',
+        'margin-right': '16mm',
+        'margin-bottom': '18mm',
+        'margin-left': '16mm',
+        'encoding': 'UTF-8',
+        'no-outline': None,
+    }
+
+    # Tell pdfkit exactly where wkhtmltopdf is installed on Windows
+    config = pdfkit.configuration(
+        wkhtmltopdf=r'D:\ProgramFiles\wkhtmltopdf\bin\wkhtmltopdf.exe'
+    )
+
+    pdf_file = pdfkit.from_string(html_string, False, options=options, configuration=config)
+
+    filename = f"{resume.full_name.replace(' ', '_') or 'resume'}_resume.pdf"
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 @api_view(['GET', 'POST'])
 def resume_list(request):
