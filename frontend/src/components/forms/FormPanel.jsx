@@ -10,6 +10,7 @@ import { SECTION_MAP } from '../../config/section.js';
 import { useDragToReorder } from '../../hooks/useDragToReorder.js';
 import SectionEditModal from '../../components/ui/SectionEditModal.jsx';
 import { Pin, User } from 'lucide-react';
+import ConfirmModal from '../ui/ConfirmModal.jsx';
 
 // Maps section id → its form component
 const FORM_COMPONENTS = {
@@ -44,6 +45,7 @@ export default function FormPanel({
 }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+  const [removingSection, setRemovingSection] = useState(null);
 
   // Filter sections to only show those that have data
   const sectionsWithData = activeSections.filter((id) => {
@@ -112,6 +114,13 @@ export default function FormPanel({
     }
   }
 
+  function handleRemoveConfirm() {
+    if (removingSection) {
+      removeSection(removingSection);
+      setRemovingSection(null);
+    }
+  }
+
   return (
     <div
       className='no-print flex flex-col border-r'
@@ -157,7 +166,7 @@ export default function FormPanel({
                   summary={getSectionSummary(id)}
                   locked={false}
                   onClick={() => setEditingSection(id)}
-                  onRemove={() => removeSection(id)}
+                  onRemove={() => setRemovingSection(id)}
                 />
               </div>
             );
@@ -218,6 +227,16 @@ export default function FormPanel({
         data={data}
         onSave={onSectionSave}
         onClose={() => setEditingSection(null)}
+      />
+
+      <ConfirmModal
+        isOpen={!!removingSection}
+        onCancel={() => setRemovingSection(null)}
+        onConfirm={handleRemoveConfirm}
+        title={`Remove ${SECTION_MAP[removingSection]?.label || 'section'}?`}
+        message='This will permanently delete all data in this section from your resume and database. This cannot be undone.'
+        confirmLabel='Remove Section'
+        isDanger={true}
       />
     </div>
   );

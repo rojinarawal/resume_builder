@@ -48,23 +48,25 @@ export function useResume() {
     setActiveSections((prev) => [...prev, sectionId]);
   }
 
-  // Add this function — called when user removes a section
-  function removeSection(sectionId) {
-    setActiveSections((prev) => prev.filter((id) => id !== sectionId));
-    // Also clear the data for that section
-    setResumeData((prev) => ({
-      ...prev,
-      [sectionId]: [],
-    }));
+  async function removeSection(sectionId) {
+    // Build updated data with section cleared out
+    const updatedData = { ...resumeData, [sectionId]: [] };
+    const updatedSections = activeSections.filter((id) => id !== sectionId);
+
+    //Update UI state immediately so preview refreshes
+    setResumeData(updatedData);
+    setActiveSections(updatedSections);
+
+    //Save to Django with the section removed
+    await _save(updatedData, updatedSections);
   }
 
   // Add this function — called when user drags to reorder
   function reorderSections(newOrder) {
-    // Never let contact move from index 0
-    setActiveSections([
-      'contact',
-      ...newOrder.filter((id) => id !== 'contact'),
-    ]);
+    const updated = ['contact', ...newOrder.filter((id) => id !== 'contact')];
+    setActiveSections(updated);
+    // Save new order to DB
+    _save(resumeData, updated);
   }
 
   // Update one section without wiping the rest
@@ -82,7 +84,7 @@ export function useResume() {
    * This function is the bridge between the two worlds.
    * We never let this leak into components.
    */
-  function toApiShape(data) {
+  function toApiShape(data, sections = activeSections) {
     return {
       full_name: data.basics.fullName,
       email: data.basics.email,
@@ -95,7 +97,7 @@ export function useResume() {
       skills: data.skills,
       projects: data.projects,
       certifications: data.certifications,
-      active_sections: activeSections,
+      active_sections: sections,
     };
   }
 
@@ -128,12 +130,12 @@ export function useResume() {
 
   // ─── Core save logic — reused by both saveResume and saveResumeWithPatch ──
 
-  async function _save(dataToSave) {
+  async function _save(dataToSave, sectionsToSave = activeSections) {
     setIsSaving(true);
     setError(null);
 
     try {
-      const payload = toApiShape(dataToSave);
+      const payload = toApiShape(dataToSave, sectionsToSave);
       let saved;
 
       if (resumeId) {
@@ -178,7 +180,7 @@ export function useResume() {
     setSaveStatus('UNSAVED');
 
     // Save the patched data directly to Django
-    await _save(updatedData);
+    await _save(updatedData, activeSections);
   }
 
   /**
