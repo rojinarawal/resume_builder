@@ -4,9 +4,11 @@ import PreviewPanel from '../components/PreviewPanel.jsx';
 import { useResume } from '../hooks/useResume.js';
 import { useValidation } from '../hooks/useValidation.js';
 import { useState } from 'react';
+import { resumeAPI } from '../services/api.js';
 
 export default function EditorPage() {
   const {
+    resumeId,
     resumeData,
     updateSection,
     saveResume,
@@ -34,6 +36,15 @@ export default function EditorPage() {
     }
     saveResume();
     setHasAttemptedSave(false); // ← reset on successful save
+  }
+
+  function handleExport() {
+    if (!resumeId) {
+      // Resume not saved yet - save first then export
+      alert('Please save your resume first before exporting.');
+      return;
+    }
+    resumeAPI.exportPdf(resumeId);
   }
 
   // Show loading screen while fetching saved resume
@@ -109,7 +120,7 @@ export default function EditorPage() {
         isValid={isValid}
         showErrors={hasAttemptedSave && !isValid}
         onSave={handleSave}
-        onPrint={() => window.print()}
+        onPrint={handleExport}
       />
       <div
         className='grid overflow-hidden'

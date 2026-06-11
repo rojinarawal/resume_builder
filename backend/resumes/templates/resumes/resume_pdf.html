@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 11px; color: #111; line-height: 1.5; }
+
+  .header { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1.5px solid #111; }
+  .name { font-size: 26px; font-weight: 700; color: #0a0a0b; letter-spacing: -0.3px; margin-bottom: 6px; }
+  .contact { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 10px; color: #3f3f46; font-family: 'Courier New', monospace; }
+  .contact span { display: inline-block; }
+
+  .section { margin-bottom: 16px; page-break-inside: avoid; }
+  .section-title { font-size: 8px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #0a0a0b; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid #e4e4e7; }
+
+  .exp { margin-bottom: 12px; page-break-inside: avoid; }
+  .exp:last-child { margin-bottom: 0; }
+  .exp-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px; }
+  .exp-role { font-size: 12px; font-weight: 700; color: #0a0a0b; }
+  .exp-dates { font-size: 9px; color: #71717a; font-family: 'Courier New', monospace; }
+  .exp-company { font-size: 10px; color: #52525b; margin-bottom: 4px; }
+  .bullets { padding-left: 14px; margin: 0; }
+  .bullets li { font-size: 10.5px; line-height: 1.55; color: #3f3f46; margin-bottom: 2px; }
+
+  .edu { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .edu-degree { font-size: 12px; font-weight: 700; color: #0a0a0b; }
+  .edu-school { font-size: 10px; color: #52525b; }
+  .edu-right { font-family: 'Courier New', monospace; font-size: 9px; color: #71717a; text-align: right; }
+
+  .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
+  .skill-row { font-size: 10.5px; }
+  .skill-cat { font-weight: 700; color: #0a0a0b; }
+  .skill-list { color: #3f3f46; }
+
+  .proj { margin-bottom: 10px; page-break-inside: avoid; }
+  .proj:last-child { margin-bottom: 0; }
+  .proj-header { display: flex; justify-content: space-between; align-items: baseline; }
+  .proj-name { font-size: 12px; font-weight: 700; color: #0a0a0b; }
+  .proj-tech { font-size: 9px; color: #71717a; font-family: 'Courier New', monospace; }
+  .proj-url { font-size: 9px; color: #52525b; margin-bottom: 3px; }
+  .proj-desc { font-size: 10.5px; color: #3f3f46; line-height: 1.5; }
+
+  .cert { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .cert-name { font-size: 12px; font-weight: 700; color: #0a0a0b; }
+  .cert-issuer { font-size: 10px; color: #52525b; }
+  .cert-date { font-size: 9px; color: #71717a; font-family: 'Courier New', monospace; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="name">{{ resume.full_name }}</div>
+  <div class="contact">
+    {% if resume.email %}<span>{{ resume.email }}</span>{% endif %}
+    {% if resume.phone %}<span>{{ resume.phone }}</span>{% endif %}
+    {% if resume.location %}<span>{{ resume.location }}</span>{% endif %}
+    {% if resume.linkedin %}<span>{{ resume.linkedin }}</span>{% endif %}
+    {% if resume.github %}<span>{{ resume.github }}</span>{% endif %}
+  </div>
+</div>
+
+{% if resume.experience %}
+<div class="section">
+  <div class="section-title">Experience</div>
+  {% for exp in resume.experience %}
+  <div class="exp">
+    <div class="exp-header">
+      <span class="exp-role">{{ exp.role }}</span>
+      <span class="exp-dates">{{ exp.start }}{% if exp.end %} – {{ exp.end }}{% endif %}</span>
+    </div>
+    <div class="exp-company">{{ exp.company }}</div>
+    {% if exp.bullets %}
+    <ul class="bullets">
+      {% for bullet in exp.bullets.splitlines %}
+      {% if bullet.strip %}<li>{{ bullet.strip }}</li>{% endif %}
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if resume.education %}
+<div class="section">
+  <div class="section-title">Education</div>
+  {% for edu in resume.education %}
+  <div class="edu">
+    <div>
+      <div class="edu-degree">{{ edu.degree }}</div>
+      <div class="edu-school">{{ edu.school }}</div>
+    </div>
+    <div class="edu-right">
+      {{ edu.year }}
+      {% if edu.gpa %}<br/>GPA: {{ edu.gpa }}{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if resume.skills %}
+<div class="section">
+  <div class="section-title">Skills</div>
+  <div class="skills-grid">
+    {% for cat in resume.skills %}
+    {% if cat.items %}
+    <div class="skill-row">
+      <span class="skill-cat">{{ cat.category }}: </span>
+      <span class="skill-list">{{ cat.items|join:", " }}</span>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if resume.projects %}
+<div class="section">
+  <div class="section-title">Projects</div>
+  {% for proj in resume.projects %}
+  <div class="proj">
+    <div class="proj-header">
+      <span class="proj-name">{{ proj.name }}</span>
+      {% if proj.tech %}<span class="proj-tech">{{ proj.tech }}</span>{% endif %}
+    </div>
+    {% if proj.url %}<div class="proj-url">{{ proj.url }}</div>{% endif %}
+    {% if proj.desc %}<div class="proj-desc">{{ proj.desc }}</div>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if resume.certifications %}
+<div class="section">
+  <div class="section-title">Certifications</div>
+  {% for cert in resume.certifications %}
+  <div class="cert">
+    <div>
+      <div class="cert-name">{{ cert.name }}</div>
+      {% if cert.issuer %}<div class="cert-issuer">{{ cert.issuer }}</div>{% endif %}
+    </div>
+    <div class="cert-date">{{ cert.date }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+</body>
+</html>

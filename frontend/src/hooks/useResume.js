@@ -130,12 +130,16 @@ export function useResume() {
 
   // ─── Core save logic — reused by both saveResume and saveResumeWithPatch ──
 
-  async function _save(dataToSave, sectionsToSave = activeSections) {
+  async function _save(dataToSave, sectionsToSave) {
     setIsSaving(true);
     setError(null);
 
     try {
       const payload = toApiShape(dataToSave, sectionsToSave);
+      // If no sections passed, use current activeSections
+      const finalSections = sectionsToSave ?? activeSections;
+      setIsSaving(true);
+      setError(null);
       let saved;
 
       if (resumeId) {
