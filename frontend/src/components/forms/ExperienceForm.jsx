@@ -1,4 +1,4 @@
-import { inputStyle, textareaStyle } from '../ui/styles';
+import { inputStyle, textareaStyle, fieldInputStyle } from '../ui/styles';
 import Field from '../ui/Field.jsx';
 import EntryCard from '../ui/EntryCard.jsx';
 import AddButton from '../ui/AddButton.jsx';
@@ -29,7 +29,13 @@ function sanitizeExperience(exp) {
   };
 }
 
-export default function ExperienceForm({ data, onChange, getError, touch }) {
+export default function ExperienceForm({
+  data,
+  onChange,
+  getError,
+  getWarning,
+  touch,
+}) {
   const experiences = Array.isArray(data.experience)
     ? data.experience.map(sanitizeExperience)
     : [];
@@ -120,25 +126,30 @@ export default function ExperienceForm({ data, onChange, getError, touch }) {
                 gap: 10,
               }}
             >
-              <Field label='Role'>
+              <Field label='Role' error={getError?.(`experience.${i}.role`)}>
                 <input
                   value={exp.role}
                   onChange={(e) => update(exp.id, 'role', e.target.value)}
+                  onBlur={() => touch?.(`experience.${i}.role`)}
                   placeholder='Software Engineer'
-                  style={inputStyle}
+                  style={fieldInputStyle(!!getError?.(`experience.${i}.role`))}
                 />
               </Field>
-              <Field label='Company'>
+              <Field
+                label='Company'
+                error={getError?.(`experience.${i}.company`)}
+              >
                 <input
                   value={exp.company}
                   onChange={(e) => update(exp.id, 'company', e.target.value)}
+                  onBlur={() => touch?.(`experience.${i}.company`)}
                   placeholder='Google'
-                  style={inputStyle}
+                  style={fieldInputStyle(
+                    !!getError?.(`experience.${i}.company`),
+                  )}
                 />
               </Field>
             </div>
-
-            {/* ↓ Swapped from <input type="month"> to MonthPicker */}
             <div
               style={{
                 display: 'grid',
@@ -146,14 +157,20 @@ export default function ExperienceForm({ data, onChange, getError, touch }) {
                 gap: 10,
               }}
             >
-              <Field label='Start Date'>
+              <Field
+                label='Start Date'
+                error={getError?.(`experience.${i}.start`)}
+              >
                 <MonthPicker
                   value={exp.start}
                   onChange={(v) => update(exp.id, 'start', v)}
                   placeholder='Start date'
                 />
               </Field>
-              <Field label='End Date'>
+              <Field
+                label='End Date'
+                warning={getWarning?.(`experience.${i}.end`)}
+              >
                 <MonthPicker
                   value={exp.end}
                   onChange={(v) => update(exp.id, 'end', v)}
@@ -162,11 +179,19 @@ export default function ExperienceForm({ data, onChange, getError, touch }) {
               </Field>
             </div>
 
-            <Field label='Bullet Points (one per line)'>
+            <Field
+              label='Bullet Points (one per line)'
+              error={getError?.(`experience.${i}.bullets`)}
+              warning={
+                getWarning?.(`experience.${i}.bullets`) ||
+                getWarning?.(`experience.${i}.metrics`)
+              }
+            >
               <textarea
                 value={exp.bullets}
                 onChange={(e) => update(exp.id, 'bullets', e.target.value)}
-                placeholder={`Led migration to microservices, reducing latency by 40%\nMentored 3 junior engineers`}
+                onBlur={() => touch?.(`experience.${i}.bullets`)}
+                placeholder={`Led migration to microservices, reducing latency by 40%\nMentored 3 junior engineers across 2 teams`}
                 style={textareaStyle}
                 rows={4}
               />
@@ -174,7 +199,6 @@ export default function ExperienceForm({ data, onChange, getError, touch }) {
           </EntryCard>
         </div>
       ))}
-
       <AddButton onClick={add} label='Add Position' />
     </div>
   );

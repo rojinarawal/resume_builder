@@ -1,6 +1,5 @@
-import SectionHeader from '../ui/SectionHeader';
 import Field from '../ui/Field';
-import { inputStyle, textareaStyle } from '../ui/styles';
+import { fieldInputStyle, textareaStyle } from '../ui/styles';
 import EntryCard from '../ui/EntryCard';
 import AddButton from '../ui/AddButton';
 
@@ -18,7 +17,13 @@ function sanitizeProject(proj) {
   };
 }
 
-export default function ProjectsForm({ data, onChange }) {
+export default function ProjectsForm({
+  data,
+  onChange,
+  getError,
+  getWarning,
+  touch,
+}) {
   const projects = Array.isArray(data.projects)
     ? data.projects.map(sanitizeProject)
     : [];
@@ -37,12 +42,6 @@ export default function ProjectsForm({ data, onChange }) {
 
   return (
     <div>
-      <SectionHeader
-        number='06'
-        title='Projects'
-        sub='Pick projects that show depth and real-world impact.'
-      />
-
       {projects.length === 0 && (
         <p
           style={{
@@ -66,37 +65,57 @@ export default function ProjectsForm({ data, onChange }) {
           <div
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
           >
-            <Field label='Project Name'>
+            <Field
+              label='Project Name'
+              error={getError?.(`projects.${i}.name`)}
+              warning={getWarning?.(`projects.${i}.name`)}
+            >
               <input
                 value={proj.name}
                 onChange={(e) => update(proj.id, 'name', e.target.value)}
+                onBlur={() => touch?.(`projects.${i}.name`)}
                 placeholder='Distributed Cache'
-                style={inputStyle}
+                style={fieldInputStyle(!!getError?.(`projects.${i}.name`))}
               />
             </Field>
-            <Field label='Tech Stack'>
+            <Field
+              label='Tech Stack'
+              error={getError?.(`projects.${i}.tech`)}
+              warning={getWarning?.(`projects.${i}.tech`)}
+            >
               <input
                 value={proj.tech}
                 onChange={(e) => update(proj.id, 'tech', e.target.value)}
+                onBlur={() => touch?.(`projects.${i}.tech`)}
                 placeholder='Go, Redis, Kubernetes'
-                style={inputStyle}
+                style={fieldInputStyle(!!getError?.(`projects.${i}.tech`))}
               />
             </Field>
           </div>
 
-          <Field label='URL (optional)'>
+          <Field
+            label='URL (optional)'
+            error={getError?.(`projects.${i}.url`)}
+            warning={getWarning?.(`projects.${i}.url`)}
+          >
             <input
               value={proj.url}
               onChange={(e) => update(proj.id, 'url', e.target.value)}
+              onBlur={() => touch?.(`projects.${i}.url`)}
               placeholder='github.com/you/project'
-              style={inputStyle}
+              style={fieldInputStyle(!!getError?.(`projects.${i}.url`))}
             />
           </Field>
 
-          <Field label='Description'>
+          <Field
+            label='Description'
+            error={getError?.(`projects.${i}.desc`)}
+            warning={getWarning?.(`projects.${i}.desc`)}
+          >
             <textarea
               value={proj.desc}
               onChange={(e) => update(proj.id, 'desc', e.target.value)}
+              onBlur={() => touch?.(`projects.${i}.desc`)}
               placeholder='Built a distributed caching layer handling 50k req/s with sub-5ms p99 latency.'
               style={textareaStyle}
               rows={3}

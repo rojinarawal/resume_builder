@@ -21,15 +21,19 @@ export default function EditorPage() {
     reorderSections,
   } = useResume();
 
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false); // ← add this
+
   const { isValid, touchAll, getError, touch, resetTouched } =
     useValidation(resumeData);
 
   function handleSave() {
     if (!isValid) {
       touchAll();
+      setHasAttemptedSave(true); // ← mark that user has attempted to save
       return;
     }
     saveResume();
+    setHasAttemptedSave(false); // ← reset on successful save
   }
 
   // Show loading screen while fetching saved resume
@@ -102,6 +106,8 @@ export default function EditorPage() {
       <Header
         saveStatus={saveStatus}
         isSaving={isSaving}
+        isValid={isValid}
+        showErrors={hasAttemptedSave && !isValid}
         onSave={handleSave}
         onPrint={() => window.print()}
       />
