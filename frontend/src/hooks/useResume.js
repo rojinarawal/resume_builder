@@ -224,6 +224,13 @@ export function useResume() {
     }
   }
 
+  // Add this function
+  function importResume(data, sections) {
+    setResumeData(data);
+    setActiveSections(sections);
+    setSaveStatus('UNSAVED');
+  }
+
   // On first mount — check if user has a saved resume id
   // If yes, load it automatically from Django
   useEffect(() => {
@@ -235,6 +242,7 @@ export function useResume() {
 
   return {
     resumeData,
+    setResumeData,
     activeSections,
     addSection,
     removeSection,
@@ -243,6 +251,7 @@ export function useResume() {
     saveResume,
     saveResumeWithPatch,
     loadResume,
+    importResume,
     resumeId,
     saveStatus,
     isSaving,

@@ -4,27 +4,32 @@ export default function PreviewPanel({ data, activeSections }) {
   return (
     <div
       style={{
-        background: '#1a1a1a',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        height: '100%',
+        background: 'var(--color-background-tertiary, #f4f4f5)',
       }}
     >
       {/* Toolbar */}
       <div
-        className='no-print flex items-center justify-between px-5 py-2 border-b'
+        className='no-print'
         style={{
-          background: 'var(--surface)',
-          borderColor: 'var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 16px',
+          background: 'var(--color-background-secondary, #fafafa)',
+          borderBottom: '0.5px solid var(--color-border-tertiary, #e4e4e7)',
           flexShrink: 0,
         }}
       >
         <span
           style={{
-            fontFamily: 'JetBrains Mono',
-            fontSize: 10,
-            color: 'var(--text-3)',
-            letterSpacing: '0.1em',
+            fontFamily: 'var(--font-mono, "JetBrains Mono", monospace)',
+            fontSize: 11,
+            color: 'var(--color-text-tertiary, #a1a1aa)',
+            letterSpacing: '0.08em',
             textTransform: 'uppercase',
           }}
         >
@@ -32,63 +37,83 @@ export default function PreviewPanel({ data, activeSections }) {
         </span>
       </div>
 
-      {/* Scrollable area */}
+      {/* Scrollable canvas */}
       <div
         style={{
           flex: 1,
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           display: 'flex',
           justifyContent: 'center',
+          alignItems: 'flex-start',
           padding: '32px 20px',
+          minHeight: 0,
         }}
       >
-        {/* Resume document */}
+        {/* Resume paper — always white, hardcoded colors intentional */}
         <div
           id='resume-doc'
           style={{
-            width: 850,
-            minHeight: 880,
-            background: '#fff',
-            color: '#111',
-            borderRadius: 10,
+            width: 760,
+            minHeight: 'calc(100vh - 130px)',
+            background: '#ffffff',
+            color: '#111111',
+            borderRadius: 8,
             padding: '52px 56px',
-            fontFamily: 'Geist, sans-serif',
-            boxShadow: '0 4px 60px rgba(0,0,0,0.6)',
-            transformOrigin: 'top center',
+            boxShadow: '0 2px 40px rgba(0,0,0,0.15)',
             flexShrink: 0,
           }}
         >
-          {/* Personal info header — always first, always shown */}
+          {/* ── Header (always shown) ── */}
           <div
             style={{
               marginBottom: 28,
-              paddingBottom: 24,
-              borderBottom: '1.5px solid #111',
+              paddingBottom: 20,
+              borderBottom: '2px solid #111111',
             }}
           >
+            {/* Name */}
             <div
               style={{
-                fontFamily: 'DM Serif Display',
-                fontSize: 32,
-                fontWeight: 600,
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontSize: 30,
+                fontWeight: 700,
                 color: '#0a0a0b',
                 lineHeight: 1.1,
+                letterSpacing: '-0.3px',
               }}
             >
               {basics.fullName || (
-                <em style={{ color: '#a1a1aa', fontStyle: 'normal' }}>
+                <span style={{ color: '#a1a1aa', fontStyle: 'italic' }}>
                   Your Name
-                </em>
+                </span>
               )}
             </div>
+
+            {/* Job title / headline */}
+            {basics.headline && (
+              <div
+                style={{
+                  fontFamily: 'Arial, sans-serif',
+                  fontSize: 13,
+                  fontStyle: 'italic',
+                  color: '#52525b',
+                  marginTop: 4,
+                }}
+              >
+                {basics.headline}
+              </div>
+            )}
+
+            {/* Contact row */}
             <div
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '6px 18px',
-                marginTop: 12,
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
+                gap: '4px 16px',
+                marginTop: 10,
+                fontFamily: '"Courier New", Courier, monospace',
+                fontSize: 11,
                 color: '#3f3f46',
               }}
             >
@@ -100,12 +125,7 @@ export default function PreviewPanel({ data, activeSections }) {
             </div>
           </div>
 
-          {/*
-            Sections rendered in EXACT order user arranged them.
-            activeSections = ['contact', 'experience', 'education', ...]
-            We skip 'contact' because it's the header above.
-            renderSection() returns null if section has no data yet.
-          */}
+          {/* ── Sections in user-defined order ── */}
           {(activeSections || [])
             .filter((id) => id !== 'contact')
             .map((id) => (
@@ -117,22 +137,23 @@ export default function PreviewPanel({ data, activeSections }) {
   );
 }
 
-// ── Helper components ─────────────────────────────────────────────────────────
+// ── Shared section wrapper ────────────────────────────────────────────────────
 
 function ResumeSection({ title, children }) {
   return (
-    <div style={{ marginBottom: 22 }}>
+    <div style={{ marginBottom: 24 }}>
+      {/* Section heading */}
       <div
         style={{
-          fontFamily: 'JetBrains Mono',
+          fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: 9,
-          fontWeight: 500,
-          letterSpacing: '0.14em',
+          fontWeight: 700,
+          letterSpacing: '0.15em',
           textTransform: 'uppercase',
           color: '#0a0a0b',
           marginBottom: 10,
           paddingBottom: 5,
-          borderBottom: '1px solid #e4e4e7',
+          borderBottom: '1px solid #d4d4d8',
         }}
       >
         {title}
@@ -142,33 +163,79 @@ function ResumeSection({ title, children }) {
   );
 }
 
-// Map section id → its render function
+// ── Section renderers ─────────────────────────────────────────────────────────
+
 function renderSection(id, data) {
-  const sectionRenderers = {
+  const renderers = {
+    summary: () =>
+      data.summary && (
+        <ResumeSection title='Summary'>
+          <p
+            style={{
+              fontFamily: 'Arial, sans-serif',
+              fontSize: 12,
+              lineHeight: 1.7,
+              color: '#3f3f46',
+              margin: 0,
+            }}
+          >
+            {data.summary}
+          </p>
+        </ResumeSection>
+      ),
+
     experience: () =>
       data.experience?.length > 0 && (
         <ResumeSection title='Experience'>
           {data.experience.map((exp) => (
-            <div key={exp.id} style={{ marginBottom: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>
+            <div key={exp.id} style={{ marginBottom: 16 }}>
+              {/* Role + dates */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#0a0a0b',
+                  }}
+                >
                   {exp.role}
                 </span>
                 <span
                   style={{
-                    fontFamily: 'JetBrains Mono',
+                    fontFamily: '"Courier New", monospace',
                     fontSize: 10,
                     color: '#71717a',
+                    whiteSpace: 'nowrap',
+                    marginLeft: 12,
                   }}
                 >
                   {[exp.start, exp.end].filter(Boolean).join(' – ')}
                 </span>
               </div>
-              <div style={{ fontSize: 12, color: '#52525b', marginBottom: 5 }}>
+
+              {/* Company */}
+              <div
+                style={{
+                  fontFamily: 'Arial, sans-serif',
+                  fontSize: 12,
+                  fontStyle: 'italic',
+                  color: '#52525b',
+                  margin: '2px 0 6px',
+                }}
+              >
                 {exp.company}
               </div>
+
+              {/* Bullet points */}
               {exp.bullets && (
-                <ul style={{ paddingLeft: 14 }}>
+                <ul style={{ paddingLeft: 16, margin: 0 }}>
                   {exp.bullets
                     .split('\n')
                     .filter(Boolean)
@@ -176,8 +243,9 @@ function renderSection(id, data) {
                       <li
                         key={i}
                         style={{
+                          fontFamily: 'Arial, sans-serif',
                           fontSize: 12,
-                          lineHeight: 1.6,
+                          lineHeight: 1.65,
                           color: '#3f3f46',
                         }}
                       >
@@ -200,23 +268,40 @@ function renderSection(id, data) {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                marginBottom: 8,
+                alignItems: 'flex-start',
+                marginBottom: 10,
               }}
             >
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>
+                <div
+                  style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#0a0a0b',
+                  }}
+                >
                   {edu.degree}
                 </div>
-                <div style={{ fontSize: 12, color: '#52525b' }}>
+                <div
+                  style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: 12,
+                    color: '#52525b',
+                    marginTop: 1,
+                  }}
+                >
                   {edu.school}
                 </div>
               </div>
               <div
                 style={{
-                  fontFamily: 'JetBrains Mono',
+                  fontFamily: '"Courier New", monospace',
                   fontSize: 10,
                   color: '#71717a',
                   textAlign: 'right',
+                  whiteSpace: 'nowrap',
+                  marginLeft: 12,
                 }}
               >
                 {edu.year}
@@ -245,13 +330,18 @@ function renderSection(id, data) {
             {data.skills
               .filter((s) => s.items?.length)
               .map((cat) => (
-                <div key={cat.id} style={{ fontSize: 12 }}>
-                  <span style={{ fontWeight: 600, color: '#0a0a0b' }}>
+                <div
+                  key={cat.id}
+                  style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: 12,
+                    color: '#3f3f46',
+                  }}
+                >
+                  <span style={{ fontWeight: 700, color: '#0a0a0b' }}>
                     {cat.category}:{' '}
                   </span>
-                  <span style={{ color: '#3f3f46' }}>
-                    {cat.items.join(', ')}
-                  </span>
+                  {cat.items.join(', ')}
                 </div>
               ))}
           </div>
@@ -262,26 +352,63 @@ function renderSection(id, data) {
       data.projects?.length > 0 && (
         <ResumeSection title='Projects'>
           {data.projects.map((proj) => (
-            <div key={proj.id} style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>
+            <div key={proj.id} style={{ marginBottom: 14 }}>
+              {/* Name + tech stack */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#0a0a0b',
+                  }}
+                >
                   {proj.name}
                 </span>
                 <span
                   style={{
-                    fontFamily: 'JetBrains Mono',
+                    fontFamily: '"Courier New", monospace',
                     fontSize: 10,
                     color: '#71717a',
+                    whiteSpace: 'nowrap',
+                    marginLeft: 12,
                   }}
                 >
                   {proj.tech}
                 </span>
               </div>
+
+              {/* URL */}
               {proj.url && (
-                <div style={{ fontSize: 12, color: '#52525b' }}>{proj.url}</div>
+                <div
+                  style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: 11,
+                    color: '#52525b',
+                    margin: '1px 0 3px',
+                  }}
+                >
+                  {proj.url}
+                </div>
               )}
+
+              {/* Description */}
               {proj.desc && (
-                <p style={{ fontSize: 12, color: '#3f3f46', lineHeight: 1.6 }}>
+                <p
+                  style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: 12,
+                    color: '#3f3f46',
+                    lineHeight: 1.65,
+                    margin: 0,
+                  }}
+                >
                   {proj.desc}
                 </p>
               )}
@@ -299,20 +426,39 @@ function renderSection(id, data) {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                marginBottom: 8,
+                alignItems: 'flex-start',
+                marginBottom: 10,
               }}
             >
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{cert.name}</div>
-                <div style={{ fontSize: 12, color: '#52525b' }}>
+                <div
+                  style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#0a0a0b',
+                  }}
+                >
+                  {cert.name}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: 12,
+                    color: '#52525b',
+                    marginTop: 1,
+                  }}
+                >
                   {cert.issuer}
                 </div>
               </div>
               <div
                 style={{
-                  fontFamily: 'JetBrains Mono',
+                  fontFamily: '"Courier New", monospace',
                   fontSize: 10,
                   color: '#71717a',
+                  whiteSpace: 'nowrap',
+                  marginLeft: 12,
                 }}
               >
                 {cert.date}
@@ -323,6 +469,6 @@ function renderSection(id, data) {
       ),
   };
 
-  const renderer = sectionRenderers[id];
+  const renderer = renderers[id];
   return renderer ? renderer() : null;
 }

@@ -1,12 +1,16 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from .models import Resume
 from .serializers import ResumeSerializer
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+from django.conf import settings
+import pdfplumber
+from google import genai
+import json
 import pdfkit
-import os
 
 @api_view(['GET'])
 def export_pdf(request, pk):
@@ -93,3 +97,151 @@ def resume_detail(request, pk):
         resume.delete()
         # 204 No Content means "successfully deleted, no response body"
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def import_pdf(request):
+    if 'file' not in request.FILES:
+        return Response(
+            {'error': 'No file uploaded'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    pdf_file = request.FILES['file']
+
+    if not pdf_file.name.endswith('.pdf'):
+        return Response(
+            {'error': 'File must be a PDF'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # ── Step 1: Extract text from PDF ────────────────────────────────
+    try:
+        with pdfplumber.open(pdf_file) as pdf:
+            text = ''
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + '\n'
+
+        if not text.strip():
+            return Response(
+                {'error': 'Could not extract text. Make sure PDF is not a scanned image.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to read PDF: {str(e)}'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # ── Step 2: Send to Gemini API ────────────────────────────────────
+    try:
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        prompt = f"""You are a resume parser. Extract structured data from the resume text below and return ONLY a valid JSON object. No explanation, no markdown, no code blocks — just raw JSON.
+
+Return exactly this structure:
+{{
+  "basics": {{
+    "fullName": "full name here",
+    "email": "email here",
+    "phone": "phone here",
+    "location": "city, country here",
+    "linkedin": "linkedin url or empty string",
+    "github": "github url or website or empty string"
+  }},
+  "experience": [
+    {{
+      "id": 1,
+      "role": "job title",
+      "company": "company name",
+      "start": "start date e.g. Jan 2022",
+      "end": "end date e.g. Present or Dec 2023",
+      "bullets": "bullet 1\\nbullet 2\\nbullet 3"
+    }}
+  ],
+  "education": [
+    {{
+      "id": 1,
+      "degree": "degree and major",
+      "school": "university name",
+      "year": "graduation year",
+      "gpa": "gpa or empty string"
+    }}
+  ],
+  "skills": [
+    {{
+      "id": 1,
+      "category": "category name e.g. Languages",
+      "items": ["skill1", "skill2"]
+    }}
+  ],
+  "projects": [
+    {{
+      "id": 1,
+      "name": "project name",
+      "tech": "tech stack",
+      "url": "url or empty string",
+      "desc": "description"
+    }}
+  ],
+  "certifications": [
+    {{
+      "id": 1,
+      "name": "certification name",
+      "issuer": "issuing org",
+      "date": "date obtained",
+      "url": "url or empty string"
+    }}
+  ]
+}}
+
+Rules:
+- If a section has no data return empty array []
+- Join multiple bullet points with \\n
+- Group skills by category if possible
+- Return ONLY the JSON — nothing else
+
+Resume text:
+{text}"""
+
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        response_text = response.text.strip()
+
+        # Clean markdown code blocks if Gemini wraps the response
+        if '```' in response_text:
+            parts = response_text.split('```')
+            for part in parts:
+                part = part.strip()
+                if part.startswith('json'):
+                    part = part[4:].strip()
+                try:
+                    parsed_data = json.loads(part)
+                    break
+                except Exception:
+                    continue
+        else:
+            parsed_data = json.loads(response_text)
+
+    except json.JSONDecodeError:
+        return Response(
+            {'error': 'Failed to parse resume structure. Try a different PDF.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    except Exception as e:
+        return Response(
+            {'error': f'AI parsing failed: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    return Response({
+        'success': True,
+        'data': parsed_data,
+        'message': 'Resume parsed successfully. Review and edit before saving.'
+    })
