@@ -88,4 +88,23 @@ export const resumeAPI = {
     // Browser handles the file download automatically
     window.open(`${BASE_URL}/resumes/${id}/export`, '_blank');
   },
+
+  // Add to resumeAPI object
+  importPdf(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Note: don't set Content-Type header — browser sets it automatically
+    // with the correct multipart boundary when using FormData
+    return fetch(`${BASE_URL}/resumes/import/`, {
+      method: 'POST',
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || `HTTP error: ${res.status}`);
+      }
+      return res.json();
+    });
+  },
 };

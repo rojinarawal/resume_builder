@@ -1,3 +1,6 @@
+import ImportButton from './ui/ImportButton';
+import { useNavigate } from 'react-router-dom';
+
 export default function Header({
   saveStatus,
   isSaving,
@@ -5,6 +8,7 @@ export default function Header({
   showErrors,
   onSave,
   onPrint,
+  onImport,
 }) {
   // Status dot color based on state
   const dotColor =
@@ -16,6 +20,7 @@ export default function Header({
 
   // Save button turns red border when form has errors
   const saveStyle = {};
+  const navigate = useNavigate();
 
   return (
     <header
@@ -68,7 +73,7 @@ export default function Header({
             {isSaving ? 'SAVING...' : saveStatus}
           </span>
         </div>
-
+        <ImportButton onImport={onImport} />
         <button
           onClick={onSave}
           disabled={isSaving}
@@ -93,9 +98,12 @@ export default function Header({
         >
           {isSaving ? 'Saving...' : showErrors ? '⚠ Fix Errors' : 'Save'}
         </button>
-
         <Btn onClick={onPrint} variant='primary'>
           Export PDF
+        </Btn>
+        // Add button next to Export PDF
+        <Btn onClick={() => navigate('/analyze')} variant='ghost'>
+          ATS Score
         </Btn>
       </div>
     </header>

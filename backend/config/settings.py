@@ -94,6 +94,8 @@ REST_FRAMEWORK = {
     ],
 }
 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 # Allow React dev server to call our API

@@ -5,11 +5,13 @@ import { useResume } from '../hooks/useResume.js';
 import { useValidation } from '../hooks/useValidation.js';
 import { useState } from 'react';
 import { resumeAPI } from '../services/api.js';
+import { sanitizeResume } from '../utils/sanitize.js';
 
 export default function EditorPage() {
   const {
     resumeId,
     resumeData,
+    setResumeData,
     updateSection,
     saveResume,
     saveResumeWithPatch,
@@ -21,6 +23,7 @@ export default function EditorPage() {
     addSection,
     removeSection,
     reorderSections,
+    importResume,
   } = useResume();
 
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false); // ← add this
@@ -45,6 +48,24 @@ export default function EditorPage() {
       return;
     }
     resumeAPI.exportPdf(resumeId);
+  }
+
+  function handleImport(parsedData) {
+    // parsedData comes from Claude — it matches our resumeData shape exactly
+    // Sanitize it first to ensure no undefined values
+    const safe = sanitizeResume(parsedData);
+
+    // Pre-fill the form
+    setResumeData(safe); // ← need to expose this from useResume
+
+    // Figure out which sections have data and activate them
+    const sections = ['contact'];
+    if (safe.experience?.length) sections.push('experience');
+    if (safe.education?.length) sections.push('education');
+    if (safe.skills?.length) sections.push('skills');
+    if (safe.projects?.length) sections.push('projects');
+    if (safe.certifications?.length) sections.push('certifications');
+    importResume(safe, sections);
   }
 
   // Show loading screen while fetching saved resume
@@ -121,6 +142,7 @@ export default function EditorPage() {
         showErrors={hasAttemptedSave && !isValid}
         onSave={handleSave}
         onPrint={handleExport}
+        onImport={handleImport}
       />
       <div
         className='grid overflow-hidden'
